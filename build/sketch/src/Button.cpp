@@ -3,22 +3,25 @@
 
 
 void Button::read() {
-    
-    // If the button is of HOLD_TYPE, we need to check if it has been held long enough
-    if (m_type == HOLD_TYPE && m_state.state == m_state.pressed_state) {
-        if (m_state.last_hold_timer != 0 && millis() - m_state.last_hold_timer >= m_state.hold_time) {
-            // If the hold time has been reached, trigger the callback
-            m_callback();
-            return; // Exit early since we already handled the hold
-        }
-    }
-
     int reading = digitalRead(m_state.pin);
 
     // Start debounce timer if the state has changed
     if (reading != m_state.last_state) {
         m_state.last_debounce_time = millis();
     }
+    
+    // Check for rapid hold callbacks while button is pressed
+    if (reading == m_state.pressed_state && 
+        m_state.last_hold_timer != 0 && 
+        millis() - m_state.last_hold_timer >= m_state.current_hold_time
+    ) {
+        // If the hold time has been reached, trigger the callback
+        m_callback();
+        m_state.last_hold_timer = millis(); // Reset hold timer for next rapid fire
+        m_state.current_hold_time = m_state.rapid_hold_time; // Switch to rapid fire mode
+        return; // Exit early since we already handled the hold
+    }
+    
 
     // If the reading is stable for longer than the debounce delay, update the state
     if (millis() - m_state.last_debounce_time > debounceDelay) {
@@ -28,13 +31,10 @@ void Button::read() {
             // Check for button press or hold
             if (m_state.state == m_state.pressed_state) {
                 // Button is pressed
-                if (m_type == PRESS_TYPE) {
-                    m_callback(); // Trigger callback for press
-                }
+                m_callback(); // Trigger callback for press
                 // If it's a hold type button, we can start the hold timer
-                else if (m_type == HOLD_TYPE && m_state.hold_time > 0) {
-                    m_state.last_hold_timer = millis();
-                }
+                m_state.last_hold_timer = millis();
+                m_state.current_hold_time = holdTimeDefault;
             } else {
                 m_state.last_hold_timer = 0; // Reset hold timer on release
             }
@@ -47,7 +47,7 @@ void Button::read() {
 
 
 // Initialize the pin state based on the button type and mode
-void Button::M_init_pin_state(int pin, ButtonType type, ButtonPinMode mode) {
+void Button::M_init_pin_state(int pin, ButtonPinMode mode) {
     if (mode == MODE_INPUT_PULLUP) {
         m_state.state = HIGH; // Default state for INPUT_PULLUP
         m_state.pressed_state = LOW; // Button pressed state
@@ -62,7 +62,6 @@ void Button::M_init_pin_state(int pin, ButtonType type, ButtonPinMode mode) {
     m_state.pin = pin;
     m_state.last_state = m_state.state;
     m_state.last_debounce_time = 0;
-    m_state.hold_time = 0; // Default hold time
+    m_state.current_hold_time = Button::holdTimeDefault; // Default hold time
     m_state.last_hold_timer = 0; // Reset hold timer
-    m_type = type;
 }
