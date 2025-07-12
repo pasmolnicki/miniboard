@@ -1,5 +1,11 @@
 #include "Button.h"
 
+// Helper function to call the callback if it is set
+inline void _make_callback(internal::callback_t& callback) {
+    if (callback) {
+        callback();
+    }
+}
 
 void Button::read() {
     int reading = digitalRead(m_state.pin);
@@ -15,7 +21,7 @@ void Button::read() {
         millis() - m_state.last_hold_timer >= m_state.current_hold_time
     ) {
         // If the hold time has been reached, trigger the callback
-        m_callback();
+        _make_callback(m_on_hold);
         m_state.last_hold_timer = millis(); // Reset hold timer for next rapid fire
         m_state.current_hold_time = m_state.rapid_hold_time; // Switch to rapid fire mode
         return; // Exit early since we already handled the hold
@@ -30,12 +36,13 @@ void Button::read() {
             // Check for button press or hold
             if (m_state.state == m_state.pressed_state) {
                 // Button is pressed
-                m_callback(); // Trigger callback for press
-                // If it's a hold type button, we can start the hold timer
+                _make_callback(m_on_press);
+                // Begin hold timer
                 m_state.last_hold_timer = millis();
-                m_state.current_hold_time = holdTimeDefault;
+                m_state.current_hold_time = holdTimeDefault; // Set long hold delay
             } else {
                 m_state.last_hold_timer = 0; // Reset hold timer on release
+                _make_callback(m_on_release);
             }
         }
     }

@@ -22,26 +22,42 @@ public:
     static constexpr unsigned int holdTimeDefault = 900; // Default hold time in milliseconds (after this delay, the callback will be rapidly triggered)
     static constexpr unsigned int holdDelay = 20; // delay between rapid callbacks
     
+    // For the future, I might add more modes, but for now I'll use just two:
     enum ButtonPinMode {
         MODE_INPUT_PULLUP,
         MODE_INPUT_PULLDOWN
     };
 
     // Press button constructor
-    Button(int pin, internal::callback_t callback, ButtonPinMode mode = MODE_INPUT_PULLUP)
-        : m_callback(callback) {
-        M_init_pin_state(pin, mode);
-    }
+    Button(int pin, ButtonPinMode mode = MODE_INPUT_PULLUP) : Button(pin, holdDelay, mode) {}
 
-    // Hold button constructor with specific hold time
-    Button(int pin, internal::callback_t callback, unsigned short hold_time, ButtonPinMode mode = MODE_INPUT_PULLUP)
-        : m_callback(callback) {
+    // Hold button constructor with specific hold time between rapid callbacks
+    Button(int pin, unsigned short hold_time, ButtonPinMode mode = MODE_INPUT_PULLUP)
+    {
         M_init_pin_state(pin, mode);
         m_state.rapid_hold_time = hold_time;
     }
 
     // Read the button state, and possibly trigger the callback
     void read();
+
+    // Set the on press callback
+    Button& onPress(internal::callback_t callback) {
+        m_on_press = callback;
+        return *this;
+    }
+
+    // Set the on release callback, also called at then end of a hold
+    Button& onRelease(internal::callback_t callback) {
+        m_on_release = callback;
+        return *this;
+    }
+
+    // Set the on hold callback, called repeatedly while the button is held
+    Button& onHold(internal::callback_t callback) {
+        m_on_hold = callback;
+        return *this;
+    }
 
 private:
     void M_init_pin_state(int pin, ButtonPinMode mode);
@@ -59,5 +75,7 @@ private:
         unsigned int last_hold_timer;
     } m_state;
 
-    internal::callback_t m_callback; // Callback function for button events
+    internal::callback_t m_on_press{nullptr}, 
+                          m_on_release{nullptr},
+                          m_on_hold{nullptr};
 };

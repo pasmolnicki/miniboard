@@ -6,26 +6,27 @@ BleKeyboard bleKeyboard;
 constexpr int BUTTON_PIN_1 = 25,
               BUTTON_PIN_2 = 26;
 
-Button enter = Button(BUTTON_PIN_1, [](){
-    // Serial.println("Button 1 pressed - Sending ENTER");
-    bleKeyboard.press(KEY_RETURN); // Send Enter key
-    delay(80); // Brief delay
-    bleKeyboard.releaseAll(); // Release all keys
-});
+Button enter = Button(BUTTON_PIN_1);
+Button right_arrow = Button(BUTTON_PIN_2);
 
-Button right_arrow = Button(BUTTON_PIN_2, [](){
-    // Serial.println("Button 2 pressed - Sending RIGHT ARROW");
-    bleKeyboard.press(KEY_RIGHT_ARROW); // Send Right Arrow key
-    delay(80); // Brief delay
-    bleKeyboard.releaseAll(); // Release all keys
-});
+void releaseAll() {
+    bleKeyboard.releaseAll();
+}
+
+template <uint8_t key>
+void press() {
+    bleKeyboard.press(key);
+}
 
 void setup() {
     Serial.begin(115200);
     delay(500);
-    Serial.println("Hello world!");
+    bleKeyboard.setName("Wiktor Keyboard");
     bleKeyboard.begin();
     Serial.println("BLE Keyboard started");
+
+    enter.onPress(press<KEY_RETURN>).onRelease(releaseAll);
+    right_arrow.onPress(press<KEY_RIGHT_ARROW>).onRelease(releaseAll);
 }
 
 void loop(){
