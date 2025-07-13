@@ -1,5 +1,5 @@
 #include <BleKeyboard.h>
-#include "src/Button.h"
+#include <ButtonLib.h>
 
 BleKeyboard bleKeyboard;
 
@@ -23,6 +23,9 @@ void setup() {
     delay(500);
     bleKeyboard.setName("Wiktor Keyboard");
     bleKeyboard.begin();
+    enter.begin();
+    right_arrow.begin();
+
     Serial.println("BLE Keyboard started");
 
     enter.onPress(press<KEY_RETURN>).onRelease(releaseAll);
