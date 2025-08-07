@@ -1,41 +1,56 @@
 #include <BleKeyboard.h>
 #include <ButtonLib.h>
+#include <Keypad.h>
 
 BleKeyboard bleKeyboard;
 
-constexpr int BUTTON_PIN_1 = 25,
-              BUTTON_PIN_2 = 26;
+constexpr int BUTTON_PIN_ARROW_UP = 14,
+              BUTTON_PIN_ARROW_DOWN = 27,
+              BUTTON_PIN_BACKSPACE = 25,
+              BUTTON_PIN_ENTER = 26;
 
-Button enter = Button(BUTTON_PIN_1);
-Button right_arrow = Button(BUTTON_PIN_2);
-
-void releaseAll() {
-    bleKeyboard.releaseAll();
-}
+Button buttons[] = {
+    Button(BUTTON_PIN_ARROW_UP),
+    Button(BUTTON_PIN_ARROW_DOWN),
+    Button(BUTTON_PIN_BACKSPACE),
+    Button(BUTTON_PIN_ENTER)
+};
 
 template <uint8_t key>
 void press() {
     bleKeyboard.press(key);
 }
 
+const internal::callback_t callbacks[] = {
+    press<KEY_UP_ARROW>,
+    press<KEY_DOWN_ARROW>,
+    press<KEY_BACKSPACE>,
+    press<KEY_RETURN>
+};
+
+void releaseAll() {
+    bleKeyboard.releaseAll();
+}
+
 void setup() {
     Serial.begin(115200);
     delay(500);
-    bleKeyboard.setName("Wiktor Keyboard");
+    bleKeyboard.setName("Miniboard");
     bleKeyboard.begin();
-    enter.begin();
-    right_arrow.begin();
+    
+    for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i) {
+        buttons[i].begin();
+        buttons[i].onPress(callbacks[i]).onRelease(releaseAll);
+    }
 
     Serial.println("BLE Keyboard started");
-
-    enter.onPress(press<KEY_RETURN>).onRelease(releaseAll);
-    right_arrow.onPress(press<KEY_RIGHT_ARROW>).onRelease(releaseAll);
 }
 
 void loop(){
     if (bleKeyboard.isConnected()) {
         // Read current button states
-        enter.read();
-        right_arrow.read();
+        for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i) {
+            buttons[i].read();
+        }
     }
 }
