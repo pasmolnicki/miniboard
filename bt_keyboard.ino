@@ -2,12 +2,17 @@
 #include <ButtonLib.h>
 #include <Keypad.h>
 
-BleKeyboard bleKeyboard;
+/**
+ * Button pin definitions
+ */
 
 constexpr int BUTTON_PIN_ARROW_UP = 14,
               BUTTON_PIN_ARROW_DOWN = 27,
               BUTTON_PIN_BACKSPACE = 25,
-              BUTTON_PIN_ENTER = 26;
+              BUTTON_PIN_ENTER = 26,
+              PIN_BATTERY_LEVEL = 13;
+
+BleKeyboard bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", 50);
 
 Button buttons[] = {
     Button(BUTTON_PIN_ARROW_UP),
@@ -32,10 +37,31 @@ void releaseAll() {
     bleKeyboard.releaseAll();
 }
 
+/**
+ * Read the battery level and set the bt characteristic.
+ * Using 47 + 100 k ohm voltage divider, with li ion 3.7v battery,
+ * so 0% is about 3.4v and 100% is about 4.2v, with that voltage divider
+ * I get 100/147 * 3.4v = 2.313v, and 100/147 * 4.2v = 2.857v
+ */
+void batteryTask() {
+    constexpr int BATTERY_LEVEL_MIN_MV = 2313,
+                  BATTERY_LEVEL_MAX_MV = 2857;
+
+    static int64_t lastUpdate = 0;
+
+    if (millis() - lastUpdate > 10000) {
+        lastUpdate = millis();
+        int rawMv = analogReadMilliVolts(PIN_BATTERY_LEVEL);
+        int mapped = std::max(BATTERY_LEVEL_MIN_MV, std::min(BATTERY_LEVEL_MAX_MV, rawMv));
+        int level = int(float(mapped - BATTERY_LEVEL_MIN_MV) / float(BATTERY_LEVEL_MAX_MV - BATTERY_LEVEL_MIN_MV) * 100.0f);
+
+        bleKeyboard.setBatteryLevel(level);
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     delay(500);
-    bleKeyboard.setName("Miniboard");
     bleKeyboard.begin();
     
     for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i) {
@@ -53,4 +79,5 @@ void loop(){
             buttons[i].read();
         }
     }
+    batteryTask();
 }
