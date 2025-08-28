@@ -2,23 +2,27 @@
 #include <ButtonLib.h>
 #include <Keypad.h>
 
-/**
- * Button pin definitions
- */
+/*
 
-constexpr int BUTTON_PIN_ARROW_UP = 14,
-              BUTTON_PIN_ARROW_DOWN = 27,
-              BUTTON_PIN_BACKSPACE = 25,
-              BUTTON_PIN_ENTER = 26,
-              PIN_BATTERY_LEVEL = 13;
+Bluetooth Keyboard
+
+License: MIT
+
+*/
+
+constexpr int PIN_BATTERY_LEVEL = 13;
+
+constexpr int PIN_BUTTONS[] = {
+    14, 27, 25, 26
+};
 
 BleKeyboard bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", 50);
 
 Button buttons[] = {
-    Button(BUTTON_PIN_ARROW_UP),
-    Button(BUTTON_PIN_ARROW_DOWN),
-    Button(BUTTON_PIN_BACKSPACE),
-    Button(BUTTON_PIN_ENTER)
+    Button(PIN_BUTTONS[0]),
+    Button(PIN_BUTTONS[1]),
+    Button(PIN_BUTTONS[2]),
+    Button(PIN_BUTTONS[3])
 };
 
 template <uint8_t key>
@@ -59,25 +63,51 @@ void batteryTask() {
     }
 }
 
+// Setup button callbacks and wakeup protocols
 void setup() {
+    bleKeyboard.begin();
     Serial.begin(115200);
     delay(500);
-    bleKeyboard.begin();
+
+    Serial.println("Miniboard config");
+    Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
+    Serial.printf("Low cpu freq mode: %d\n", setCpuFrequencyMhz(80));
+    Serial.printf("CPU: %dMhz\n", getCpuFrequencyMhz());
     
     for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i) {
         buttons[i].begin();
         buttons[i].onPress(callbacks[i]).onRelease(releaseAll);
+
+        // wakeup if any button is pressed
+        gpio_wakeup_enable(gpio_num_t(PIN_BUTTONS[i]), GPIO_INTR_LOW_LEVEL);
     }
 
+    esp_sleep_enable_gpio_wakeup();
     Serial.println("BLE Keyboard started");
 }
 
 void loop(){
+    static int64_t lastActivity = 0;
+
+    // Enter deep sleep mode after 5 minutes of inactivity
+    if (millis() - lastActivity > 5 * 60 * 1000) {
+        esp_deep_sleep_start();
+    }
+
     if (bleKeyboard.isConnected()) {
         // Read current button states
+        bool anyPressed = false;
         for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i) {
             buttons[i].read();
+            if (buttons[i].isPressed()) {
+                anyPressed = true;
+            }
         }
+
+        if (anyPressed) {
+            lastActivity = millis();
+        }
+
+        batteryTask();
     }
-    batteryTask();
 }
