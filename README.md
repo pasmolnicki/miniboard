@@ -1,8 +1,8 @@
 # Bluetooth Keyboard
 
-Custom BLE keyboard with configurable key mappings
+Custom Bluetooth Low Energy keyboard with configurable key mappings
 
-<img src="/docs/images/bt-keyboard-miniboard.jpg" width="300" />
+<img src="/docs/images/bt-keyboard-miniboard.jpg" width="700" />
 
 ## Assembly
 
@@ -17,6 +17,13 @@ Custom BLE keyboard with configurable key mappings
 Circuit diagram coming soon
 
 ## Notes
+
+> [!WARNING]
+> DO NOT power ESP32 when batter is plugged, this can cause damage to the microcontroller.
+> Instead when uploading the sketch, take out the battery and KEEP THE SWITCH ON (the state in which the battery powers up the board).
+> Due to my flawless design, this board features a heater when powered by built-in USB port, that may warm you up quickly or
+> your whole house. If desired, then keep the switch off and make yourself comfy with that heat.
+
 
 Battery life: ~18-19 hours with a 3000mAh battery (ESP32 draws ~160mA)
 
