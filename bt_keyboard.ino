@@ -10,13 +10,14 @@ License: MIT
 
 */
 
-constexpr int PIN_BATTERY_LEVEL = 13;
+constexpr int PIN_BATTERY_LEVEL = 13,
+              PIN_LED_BUILTIN = 2;
 
 constexpr int PIN_BUTTONS[] = {
     14, 27, 25, 26
 };
 
-BleKeyboard bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", 50);
+BleKeyboard bleKeyboard;
 
 Button buttons[] = {
     Button(PIN_BUTTONS[0]),
@@ -65,9 +66,15 @@ void batteryTask() {
 
 // Setup button callbacks and wakeup protocols
 void setup() {
+    pinMode(PIN_LED_BUILTIN, OUTPUT);
+    digitalWrite(PIN_LED_BUILTIN, HIGH);
+
+    bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", 50);
     bleKeyboard.begin();
     Serial.begin(115200);
+    
     delay(500);
+    digitalWrite(PIN_LED_BUILTIN, LOW);
 
     Serial.println("Miniboard config");
     Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
@@ -79,10 +86,10 @@ void setup() {
         buttons[i].onPress(callbacks[i]).onRelease(releaseAll);
 
         // wakeup if any button is pressed
-        gpio_wakeup_enable(gpio_num_t(PIN_BUTTONS[i]), GPIO_INTR_LOW_LEVEL);
+        // gpio_wakeup_enable(gpio_num_t(PIN_BUTTONS[i]), GPIO_INTR_LOW_LEVEL);
     }
 
-    esp_sleep_enable_gpio_wakeup();
+    // esp_sleep_enable_gpio_wakeup();
     Serial.println("BLE Keyboard started");
 }
 
@@ -91,7 +98,7 @@ void loop(){
 
     // Enter deep sleep mode after 5 minutes of inactivity
     if (millis() - lastActivity > 5 * 60 * 1000) {
-        esp_deep_sleep_start();
+        // esp_deep_sleep_start();
     }
 
     if (bleKeyboard.isConnected()) {
