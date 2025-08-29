@@ -5,6 +5,7 @@
 
 Bluetooth Keyboard
 
+Made by IlikeChooros
 License: MIT
 
 */
@@ -130,6 +131,7 @@ void loop() {
         // https://github.com/nkolban/esp32-snippets/issues/839
         Serial.println("Waking up...");
         bleKeyboard.begin();
+        lastActivity = millis();
     }
 
     if (bleKeyboard.isConnected()) {
