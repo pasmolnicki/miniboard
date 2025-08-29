@@ -6,7 +6,7 @@ Custom Bluetooth Low Energy keyboard with configurable key mappings
 
 ## Assembly
 
-- ESP32 dev board
+- ESP32 devkit v1 board
 - 4x1 keymap
 - Caps: 0.1uF ceramic, 100uF electrolytic
 - 3.7V Li-ion battery + holder

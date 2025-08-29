@@ -1,6 +1,5 @@
-#include <BleKeyboard.h>
-#include <ButtonLib.h>
-#include <Keypad.h>
+#include "src/BleKeyboard.h"
+#include "src/ButtonLib.h"
 
 /*
 
@@ -10,11 +9,15 @@ License: MIT
 
 */
 
-constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000, // 15 minutes
+              BATTERY_UPDATE_INTERVAL = 10 * 1000; // 10 seconds
 
 constexpr int PIN_BATTERY_LEVEL = 13,
               PIN_LED_BUILTIN = 2;
 
+// buttons 1, 2, 3, 4 -> GPIOs 26, 25, 14, 27
+// which means the connection mapping looks like this:
+// 3, 4, 1, 2 (the gpios are in order: 14, 27, 26, 25 on the esp32 board)
 constexpr int PIN_BUTTONS[] = {
     26, 25, 14, 27
 };
@@ -46,7 +49,7 @@ void releaseAll() {
 
 /**
  * Using 47 + 100 k ohm voltage divider, with li ion 3.7v battery,
- * so 0% is about 3.4v and 100% is about 4.2v, with that voltage divider
+ * so 0% is about 3.2v and 100% is about 4.1v, with that voltage divider
  * I get 100/147 * 3.2v = 2.176v, and 100/147 * 4.1v = 2.789v
  */
 uint8_t readBatteryLevel() {
@@ -64,7 +67,7 @@ uint8_t readBatteryLevel() {
 void batteryTask() {
     static int64_t lastUpdate = 0;
 
-    if (millis() - lastUpdate > 10000) {
+    if (millis() - lastUpdate > BATTERY_UPDATE_INTERVAL) {
         lastUpdate = millis();
         bleKeyboard.setBatteryLevel(readBatteryLevel());
     }
@@ -72,15 +75,27 @@ void batteryTask() {
 
 // Setup button callbacks and wakeup protocols
 void setup() {
-    pinMode(PIN_LED_BUILTIN, OUTPUT);
-    digitalWrite(PIN_LED_BUILTIN, HIGH);
+    // battery level pin
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << PIN_BATTERY_LEVEL),
+        .mode = GPIO_MODE_INPUT,
+    };
+    gpio_config(&io_conf);
+
+    // turn on led on startup
+    gpio_config_t led_conf = {
+        .pin_bit_mask = (1ULL << PIN_LED_BUILTIN),
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    gpio_config(&led_conf);
+    gpio_set_level(gpio_num_t(PIN_LED_BUILTIN), HIGH);
 
     bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", readBatteryLevel());
     bleKeyboard.begin();
     Serial.begin(115200);
     
     delay(500);
-    digitalWrite(PIN_LED_BUILTIN, LOW);
+    gpio_set_level(gpio_num_t(PIN_LED_BUILTIN), LOW);
 
     Serial.println("Miniboard config");
     Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
@@ -94,7 +109,7 @@ void setup() {
         // wakeup if any button is pressed
         gpio_wakeup_enable(gpio_num_t(PIN_BUTTONS[i]), GPIO_INTR_LOW_LEVEL);
     }
-
+    
     esp_sleep_enable_gpio_wakeup();
     Serial.println("BLE Keyboard started");
 }
@@ -103,12 +118,18 @@ void loop() {
     static int64_t lastActivity = 0;
 
     // Enter deep sleep mode after given timeout
-    if (millis() - lastActivity > SLEEP_TIMEOUT) {
+    if (millis() - lastActivity > SLEEP_TIMEOUT) { 
+        Serial.println("Entering sleep...");
+        Serial.flush();
+        bleKeyboard.end();
+        Serial.flush();
         esp_light_sleep_start();
-        lastActivity = millis();
 
-        bleKeyboard.begin(); // causes memory leak but whatever :))
-        bleKeyboard.setBatteryLevel(readBatteryLevel());
+        // after wakeup cope with memory leak, there is no way to deinit ble device 
+        // without memory leak
+        // https://github.com/nkolban/esp32-snippets/issues/839
+        Serial.println("Waking up...");
+        bleKeyboard.begin();
     }
 
     if (bleKeyboard.isConnected()) {
