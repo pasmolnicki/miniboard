@@ -19,14 +19,8 @@ Slightly modified by IlikeChooros, with 'end' method added.
 
 #include <NimBLECharacteristic.h>
 #include <NimBLEHIDDevice.h>
-
-#define BLEDevice                  NimBLEDevice
-#define BLEServerCallbacks         NimBLEServerCallbacks
-#define BLECharacteristicCallbacks NimBLECharacteristicCallbacks
-#define BLEHIDDevice               NimBLEHIDDevice
-#define BLECharacteristic          NimBLECharacteristic
-#define BLEAdvertising             NimBLEAdvertising
-#define BLEServer                  NimBLEServer
+#include <NimBLEAdvertising.h>
+#include <NimBLEServer.h>
 
 #else
 
@@ -137,15 +131,16 @@ typedef struct
   uint8_t keys[6];
 } KeyReport;
 
-class BleKeyboard : public Print, public BLEServerCallbacks, public BLECharacteristicCallbacks
+
+class BleKeyboard : public Print, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks
 {
 private:
-  BLEServer*        pServer;
-  BLEHIDDevice* hid;
-  BLECharacteristic* inputKeyboard;
-  BLECharacteristic* outputKeyboard;
-  BLECharacteristic* inputMediaKeys;
-  BLEAdvertising*    advertising;
+  NimBLEServer*        pServer;
+  NimBLEHIDDevice* hid;
+  NimBLECharacteristic* inputKeyboard;
+  NimBLECharacteristic* outputKeyboard;
+  NimBLECharacteristic* inputMediaKeys;
+  NimBLEAdvertising*    advertising;
   KeyReport          _keyReport;
   MediaKeyReport     _mediaKeyReport;
   String        deviceName;
@@ -182,11 +177,10 @@ public:
   void set_product_id(uint16_t pid);
   void set_version(uint16_t version);
 protected:
-  virtual void onStarted(BLEServer *pServer) { };
-  virtual void onConnect(BLEServer* pServer);
-  virtual void onDisconnect(BLEServer* pServer);
-  virtual void onWrite(BLECharacteristic* me);
-
+  virtual void onStarted(NimBLEServer *pServer) { };
+  virtual void onConnect(NimBLEServer* pServer);
+  virtual void onDisconnect(NimBLEServer* pServer);
+  virtual void onWrite(NimBLECharacteristic* me);
 };
 
 #endif // CONFIG_BT_ENABLED

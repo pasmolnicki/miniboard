@@ -3,3 +3,4 @@ build
 esp32.svd
 debug.cfg
 debug_custom.json
+todo.md

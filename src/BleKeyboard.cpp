@@ -6,7 +6,7 @@
 #include <NimBLEUtils.h>
 #include <NimBLEHIDDevice.h>
 #else
-#include <BLEDevice.h>
+#include <NimBLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include "BLE2902.h"
@@ -22,7 +22,7 @@
   #define LOG_TAG ""
 #else
   #include "esp_log.h"
-  static const char* LOG_TAG = "BLEDevice";
+  static const char* LOG_TAG = "NimBLEDevice";
 #endif
 
 
@@ -103,26 +103,26 @@ BleKeyboard::BleKeyboard(String deviceName, String deviceManufacturer, uint8_t b
 
 void BleKeyboard::begin(void)
 {
-  BLEDevice::init(std::string(deviceName.c_str()));
-  pServer = BLEDevice::createServer();
+  NimBLEDevice::init(std::string(deviceName.c_str()));
+  pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(this);
 
-  hid = new BLEHIDDevice(pServer);
-  inputKeyboard = hid->inputReport(KEYBOARD_ID);  // <-- input REPORTID from report map
-  outputKeyboard = hid->outputReport(KEYBOARD_ID);
-  inputMediaKeys = hid->inputReport(MEDIA_KEYS_ID);
+  hid = new NimBLEHIDDevice(pServer);
+  inputKeyboard = hid->getInputReport(KEYBOARD_ID);  // <-- input REPORTID from report map
+  outputKeyboard = hid->getOutputReport(KEYBOARD_ID);
+  inputMediaKeys = hid->getInputReport(MEDIA_KEYS_ID);
 
   outputKeyboard->setCallbacks(this);
 
-  hid->manufacturer()->setValue(std::string(deviceManufacturer.c_str()));
+  hid->setManufacturer(std::string(deviceManufacturer.c_str()));
 
-  hid->pnp(0x02, vid, pid, version);
-  hid->hidInfo(0x00, 0x01);
+  hid->setPnp(0x02, vid, pid, version);
+  hid->setHidInfo(0x00, 0x01);
 
 
 #if defined(USE_NIMBLE)
 
-  BLEDevice::setSecurityAuth(true, true, true);
+  NimBLEDevice::setSecurityAuth(true, true, true);
 
 #else
 
@@ -130,15 +130,15 @@ void BleKeyboard::begin(void)
   pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
 #endif // USE_NIMBLE
 
-  hid->reportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
+  hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
   hid->startServices();
 
   onStarted(pServer);
 
   advertising = pServer->getAdvertising();
   advertising->setAppearance(HID_KEYBOARD);
-  advertising->addServiceUUID(hid->hidService()->getUUID());
-  advertising->setScanResponse(false);
+  advertising->addServiceUUID(hid->getHidService()->getUUID());
+//   advertising->setScanResponse(false);
   advertising->start();
   hid->setBatteryLevel(batteryLevel);
   
@@ -153,22 +153,7 @@ void BleKeyboard::end(void)
   without causing memory leak...
   https://github.com/nkolban/esp32-snippets/issues/839
   */
-  if (hid) {
-    delete hid;
-    hid = nullptr;
-  }
-
-  if (pServer) {
-    pServer->getAdvertising()->stop();
-    if (pServer->getConnId() != ESP_GATT_IF_NONE) {
-      pServer->disconnect(pServer->getConnId());
-    }
-
-    delete pServer;
-    pServer = nullptr;
-  }
-
-  BLEDevice::deinit(false); // cannot release whole bt memory here
+  NimBLEDevice::deinit(false); // cannot release whole bt memory here
 }
 
 bool BleKeyboard::isConnected(void) {
@@ -520,7 +505,7 @@ size_t BleKeyboard::write(const uint8_t *buffer, size_t size) {
 	return n;
 }
 
-void BleKeyboard::onConnect(BLEServer* pServer) {
+void BleKeyboard::onConnect(NimBLEServer* pServer) {
   this->connected = true;
 
 #if !defined(USE_NIMBLE)
@@ -534,7 +519,7 @@ void BleKeyboard::onConnect(BLEServer* pServer) {
 
 }
 
-void BleKeyboard::onDisconnect(BLEServer* pServer) {
+void BleKeyboard::onDisconnect(NimBLEServer* pServer) {
   this->connected = false;
 
 #if !defined(USE_NIMBLE)
@@ -549,7 +534,7 @@ void BleKeyboard::onDisconnect(BLEServer* pServer) {
 #endif // !USE_NIMBLE
 }
 
-void BleKeyboard::onWrite(BLECharacteristic* me) {
+void BleKeyboard::onWrite(NimBLECharacteristic* me) {
   uint8_t* value = (uint8_t*)(me->getValue().c_str());
   (void)value;
   ESP_LOGI(LOG_TAG, "special keys: %d", *value);
