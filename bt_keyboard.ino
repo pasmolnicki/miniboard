@@ -49,7 +49,7 @@ void setup() {
     // Read EEPROM for saved settings
     settings.load();
     setupLed();
-    settings.get()->boot_type = BOOT_BLE_KEYBOARD; // always boot as keyboard, to change to server press the button
+    Serial.begin(115200);
     
     switch (settings.get()->boot_type)
     {
@@ -66,7 +66,6 @@ void setup() {
         loopTask = keyboardTask;
     }
 
-    Serial.begin(115200);
     printConfig();
 }
 

@@ -19,7 +19,7 @@
 
 #if defined(CONFIG_ARDUHAL_ESP_LOG)
   #include "esp32-hal-log.h"
-  #define LOG_TAG ""
+  #define LOG_TAG "NimBLEDevice"
 #else
   #include "esp_log.h"
   static const char* LOG_TAG = "NimBLEDevice";
@@ -97,32 +97,42 @@ static const uint8_t _hidReportDescriptor[] = {
 
 BleKeyboard::BleKeyboard(std::string deviceName, std::string deviceManufacturer, uint8_t batteryLevel) 
     : hid(0)
+	, connected(false)
     , deviceName(deviceName.substr(0, 15))
     , deviceManufacturer(deviceManufacturer.substr(0, 15))
     , batteryLevel(batteryLevel) {}
 
+// #define dlog_v(msg, ...) Serial.printf("[" LOG_TAG "]: " msg, ##__VA_ARGS__)
+#define dlog_v(msg, ...) (void)msg;
+
 void BleKeyboard::begin(void)
 {
-  NimBLEDevice::init(deviceName);
-  pServer = NimBLEDevice::createServer();
-  pServer->setCallbacks(this);
+	// Init BLE stack (returns immediately if already inited)
+	NimBLEDevice::init(deviceName);
+	NimBLEDevice::setPower(ESP_PWR_LVL_P7); // ensure max tx power for easier discovery
 
-  hid = new NimBLEHIDDevice(pServer);
-  inputKeyboard = hid->getInputReport(KEYBOARD_ID);  // <-- input REPORTID from report map
-  outputKeyboard = hid->getOutputReport(KEYBOARD_ID);
-  inputMediaKeys = hid->getInputReport(MEDIA_KEYS_ID);
+	// Clear any previous state
+	memset(&_keyReport, 0, sizeof(_keyReport));
+	memset(&_mediaKeyReport, 0, sizeof(_mediaKeyReport));
 
-  outputKeyboard->setCallbacks(this);
+	pServer = NimBLEDevice::createServer();
+	pServer->setCallbacks(this);
 
-  hid->setManufacturer(deviceManufacturer);
+	hid = new NimBLEHIDDevice(pServer);
+	inputKeyboard = hid->getInputReport(KEYBOARD_ID);  // input report (keyboard)
+	outputKeyboard = hid->getOutputReport(KEYBOARD_ID);
+	inputMediaKeys = hid->getInputReport(MEDIA_KEYS_ID);
 
-  hid->setPnp(0x02, vid, pid, version);
-  hid->setHidInfo(0x00, 0x01);
+	outputKeyboard->setCallbacks(this);
+
+	hid->setManufacturer(deviceManufacturer);
+	hid->setPnp(0x02, vid, pid, version);
+	hid->setHidInfo(0x00, 0x01);
 
 
 #if defined(USE_NIMBLE)
 
-  NimBLEDevice::setSecurityAuth(true, true, true);
+  NimBLEDevice::setSecurityAuth(false, false, true);
 
 #else
 
@@ -130,18 +140,25 @@ void BleKeyboard::begin(void)
   pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_MITM_BOND);
 #endif // USE_NIMBLE
 
-  hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
-  hid->startServices();
+	hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
+	hid->startServices();
 
-  onStarted(pServer);
+	onStarted(pServer);
 
-  advertising = pServer->getAdvertising();
-  advertising->setAppearance(HID_KEYBOARD);
-  advertising->addServiceUUID(hid->getHidService()->getUUID());
-  advertising->start();
-  hid->setBatteryLevel(batteryLevel);
-  
-  ESP_LOGD(LOG_TAG, "Advertising started!");
+	advertising = NimBLEDevice::getAdvertising(); // use global advertising instance (recommended)
+	advertising->setAppearance(HID_KEYBOARD);
+	advertising->addServiceUUID(hid->getHidService()->getUUID());
+	advertising->setName(deviceName); // ensure name present in adv payload
+	advertising->enableScanResponse(true);
+	advertising->start();
+
+	hid->setBatteryLevel(batteryLevel);
+
+	if (advertising->isAdvertising()) {
+		dlog_v("Advertising started!\n");
+	} else {
+		dlog_v("Failed to start advertising\n");
+	}
 }
 
 void BleKeyboard::end(void)
@@ -504,8 +521,11 @@ size_t BleKeyboard::write(const uint8_t *buffer, size_t size) {
 	return n;
 }
 
-void BleKeyboard::onConnect(NimBLEServer* pServer) {
+void BleKeyboard::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
   this->connected = true;
+  dlog_v("Connected to BLE keyboard");
+  pServer->updateConnParams(connInfo.getConnHandle(), 24, 48, 4, 400);
+
 
 #if !defined(USE_NIMBLE)
 
@@ -518,8 +538,9 @@ void BleKeyboard::onConnect(NimBLEServer* pServer) {
 
 }
 
-void BleKeyboard::onDisconnect(NimBLEServer* pServer) {
+void BleKeyboard::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
   this->connected = false;
+  NimBLEDevice::startAdvertising(); // restart advertising
 
 #if !defined(USE_NIMBLE)
 
@@ -533,11 +554,11 @@ void BleKeyboard::onDisconnect(NimBLEServer* pServer) {
 #endif // !USE_NIMBLE
 }
 
-void BleKeyboard::onWrite(NimBLECharacteristic* me) {
-  uint8_t* value = (uint8_t*)(me->getValue().c_str());
-  (void)value;
-  ESP_LOGI(LOG_TAG, "special keys: %d", *value);
-}
+// void BleKeyboard::onWrite(NimBLECharacteristic* me) {
+//   uint8_t* value = (uint8_t*)(me->getValue().c_str());
+//   (void)value;
+//   ESP_LOGI(LOG_TAG, "special keys: %d", *value);
+// }
 
 void BleKeyboard::delay_ms(uint64_t ms) {
   uint64_t m = esp_timer_get_time();

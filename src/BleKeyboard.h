@@ -178,9 +178,8 @@ public:
   void set_version(uint16_t version);
 protected:
   virtual void onStarted(NimBLEServer *pServer) { };
-  virtual void onConnect(NimBLEServer* pServer);
-  virtual void onDisconnect(NimBLEServer* pServer);
-  virtual void onWrite(NimBLECharacteristic* me);
+  virtual void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
+  virtual void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
 };
 
 #endif // CONFIG_BT_ENABLED

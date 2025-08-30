@@ -3,24 +3,13 @@
 BleKeyboard bleKeyboard;
 
 Button serverButton = Button(PIN_SERVER_BUTTON);
+uint8_t* keypad = nullptr;
 
 Button keypadButtons[] = {
     Button(PIN_BUTTONS[2]),
     Button(PIN_BUTTONS[3]),
     Button(PIN_BUTTONS[0]),
     Button(PIN_BUTTONS[1])
-};
-
-template <uint8_t key>
-void press() {
-    bleKeyboard.press(key);
-}
-
-const internal::callback_t callbacks[] = {
-    press<KEY_DOWN_ARROW>,
-    press<KEY_UP_ARROW>,
-    press<KEY_BACKSPACE>,
-    press<KEY_RETURN>
 };
 
 void releaseAll() {
@@ -54,7 +43,9 @@ void setupKeyboard(EEPROMSettings& settings) {
     bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", readBatteryLevel());
     bleKeyboard.begin();
 
-    serverButton.begin();
+    serverButton.begin();    
+
+    keypad = settings.get()->keypad;
 
     // Restart the device and boot the HTTP server
     serverButton.onPress([&settings](){
@@ -66,7 +57,9 @@ void setupKeyboard(EEPROMSettings& settings) {
 
     for (int i = 0; i < sizeof(keypadButtons) / sizeof(keypadButtons[0]); ++i) {
         keypadButtons[i].begin();
-        keypadButtons[i].onPress(callbacks[i]).onRelease(releaseAll);
+        keypadButtons[i].onPress([i]() {
+            bleKeyboard.press(keypad[i]);
+        }).onRelease(releaseAll);
 
         // wakeup if any button is pressed
         gpio_wakeup_enable(gpio_num_t(PIN_BUTTONS[i]), GPIO_INTR_LOW_LEVEL);
@@ -94,7 +87,7 @@ void keyboardTask() {
     }
 
     serverButton.read();
-    
+
     if (bleKeyboard.isConnected()) {
         // Read current button states
         bool anyPressed = false;
@@ -108,7 +101,7 @@ void keyboardTask() {
         if (anyPressed) {
             lastActivity = millis();
         }
-
+        
         batteryTask();
     }
 }
