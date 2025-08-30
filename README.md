@@ -16,6 +16,14 @@ Custom Bluetooth Low Energy keyboard with configurable key mappings
 
 Circuit diagram coming soon
 
+## Configuration
+
+This project uses 3rd party Arduino libraries:
+- [NimBLE-Arduino](https://github.com/NimBLEArduino/NimBLE-Arduino) for BLE functionality
+- [BleKeyboard](https://github.com/T-vK/ESP32-BLE-Keyboard) for the BLE keyboard implementation (already included in `src` folder)
+
+To run this project, make sure you have downloaded the NimBLE-Arduino library.
+
 ## Notes
 
 > [!WARNING]

@@ -13,10 +13,12 @@ Slightly modified by IlikeChooros, with 'end' method added.
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#define USE_NIMBLE
+
 #if defined(USE_NIMBLE)
 
-#include "NimBLECharacteristic.h"
-#include "NimBLEHIDDevice.h"
+#include <NimBLECharacteristic.h>
+#include <NimBLEHIDDevice.h>
 
 #define BLEDevice                  NimBLEDevice
 #define BLEServerCallbacks         NimBLEServerCallbacks
@@ -181,9 +183,9 @@ public:
   void set_version(uint16_t version);
 protected:
   virtual void onStarted(BLEServer *pServer) { };
-  virtual void onConnect(BLEServer* pServer) override;
-  virtual void onDisconnect(BLEServer* pServer) override;
-  virtual void onWrite(BLECharacteristic* me) override;
+  virtual void onConnect(BLEServer* pServer);
+  virtual void onDisconnect(BLEServer* pServer);
+  virtual void onWrite(BLECharacteristic* me);
 
 };
 
