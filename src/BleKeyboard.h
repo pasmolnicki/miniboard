@@ -13,21 +13,10 @@ Slightly modified by IlikeChooros, with 'end' method added.
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
-#define USE_NIMBLE
-
-#if defined(USE_NIMBLE)
-
 #include <NimBLECharacteristic.h>
 #include <NimBLEHIDDevice.h>
 #include <NimBLEAdvertising.h>
 #include <NimBLEServer.h>
-
-#else
-
-#include "BLEHIDDevice.h"
-#include "BLECharacteristic.h"
-
-#endif // USE_NIMBLE
 
 #include "Print.h"
 
