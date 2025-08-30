@@ -143,8 +143,8 @@ private:
   NimBLEAdvertising*    advertising;
   KeyReport          _keyReport;
   MediaKeyReport     _mediaKeyReport;
-  String        deviceName;
-  String        deviceManufacturer;
+  std::string        deviceName;
+  std::string        deviceManufacturer;
   uint8_t            batteryLevel;
   bool               connected = false;
   uint32_t           _delay_ms = 7;
@@ -155,7 +155,7 @@ private:
   uint16_t version   = 0x0210;
 
 public:
-  BleKeyboard(String deviceName = "ESP32 Keyboard", String deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
+  BleKeyboard(std::string deviceName = "ESP32 Keyboard", std::string deviceManufacturer = "Espressif", uint8_t batteryLevel = 100);
   void begin(void);
   void end(void);
   void sendReport(KeyReport* keys);
@@ -170,7 +170,7 @@ public:
   void releaseAll(void);
   bool isConnected(void);
   void setBatteryLevel(uint8_t level);
-  void setName(String deviceName);  
+  void setName(std::string deviceName);  
   void setDelay(uint32_t ms);
 
   void set_vendor_id(uint16_t vid);

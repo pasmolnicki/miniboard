@@ -1,74 +1,93 @@
 #include "server.h"
 
 // Assign output variables to GPIO pins
-const int led = 2;
-String ledState = "off";
-
-WebServer* server = nullptr;
+static WebServer* server = nullptr;
+static EEPROMSettings* g_settings = nullptr; // pointer to modify and persist
 
 // pre-declare server functions
-void handleRoot();
-void handleSwitchLed();
-void handleInfo();
+static void handleRoot();
+static void handleSwitchLed();
+static void handleInfo();
+static void handleSave();
+static void sendJson(int code, const String &body) { 
+    server->send(code, "application/json", body); 
+}
 
-void startServer() {
-  server = new WebServer(80);
+void startServer(EEPROMSettings &settings) {
+    g_settings = &settings;
+    server = new WebServer(80);
+    initPage();
 
-  // Initialize the output variables as outputs
-  pinMode(led, OUTPUT);
-  // Set outputs to LOW
-  digitalWrite(led, LOW);
+    Serial.print("Setting as access point ");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(SERVER_SSID, SERVER_PASSWORD);
 
-  Serial.print("Setting as access point ");
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(SERVER_SSID, SERVER_PASSWORD);
+    Serial.println("");
+    Serial.println("ESP32 Wi-Fi Access Point ready!");
 
-  Serial.println("");
-  Serial.println("ESP32 Wi-Fi Access Point ready!");
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
 
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
+    server->on("/", handleRoot);
+    server->on("/info", handleInfo);
+    server->on("/save", HTTP_POST, handleSave);
+    server->begin();
 
-  server->on("/", handleRoot);
-  server->on("/info", handleInfo);
-  server->on("/switch_led", handleSwitchLed);
-  server->begin();
-
-  Serial.println("HTTP server started");
+    Serial.println("HTTP server started");
 }
 
 void serverTask() {
-    // Handle incoming client requests
-  server->handleClient();
+    server->handleClient();
 }
 
-// Function to handle the root URL and show the current states
-void handleRoot() {
-  server->send(200, "text/html", PAGE_HTML);
+static void handleRoot() {
+    server->send(200, "text/html", getPage());
 }
 
-void handleSwitchLed() {
-  ledState = ledState == "off" ? "on" : "off";
-  digitalWrite(led, ledState == "on" ? HIGH : LOW);
-  server->send(200, "application/json", "{\"state\":\"" + ledState + "\"}");
+static void handleInfo() {
+    constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u]})";
+
+    auto s = g_settings->get();
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), JSON_TEMPLATE, 
+        readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3]);
+    sendJson(200, buffer);
 }
 
-void handleInfo() {
-  constexpr const char info[] = R"(
-    {
-      "battery_level": %d,
-      "keymap": %s,
-      "led_state": %s
+// Accept JSON body: {"keymap":[k1,k2,k3,k4]}
+static void handleSave() {
+    if (!g_settings) { 
+        sendJson(500, "{\"error\":\"settings null\"}"); 
+        return; 
     }
-  )";
+    if (!server->hasArg("plain")) { 
+        sendJson(400, "{\"error\":\"missing body\"}"); 
+        return; 
+    }
 
-  char buffer[sizeof(info) + 64];
-  sprintf(buffer, info, readBatteryLevel(), 
-    "[]",
-    ledState.c_str()
-  );
+    String body = server->arg("plain");
+    int vals[4];
+    int matched = sscanf(body.c_str(), "{\"keymap\":[%d,%d,%d,%d]}", &vals[0], &vals[1], &vals[2], &vals[3]);
+    if (matched != 4) { 
+        sendJson(400, "{\"error\":\"bad format\"}"); 
+        return; 
+    }
 
-  server->send(200, "application/json", buffer);
+    Serial.printf("Received new keymap: [%d, %d, %d, %d]\n", vals[0], vals[1], vals[2], vals[3]);
+
+    auto s = g_settings->get();
+    for (int i=0;i<4;i++) {
+        s->keypad[i] = (uint8_t)vals[i];
+    }
+
+    s->boot_type = BOOT_BLE_KEYBOARD; // ensure we boot keyboard next
+    g_settings->save();
+    sendJson(200, "{\"status\":\"ok\",\"rebooting\":true}");
+    
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(500);
+    esp_restart();
 }
 

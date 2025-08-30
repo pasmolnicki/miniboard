@@ -95,15 +95,15 @@ static const uint8_t _hidReportDescriptor[] = {
   END_COLLECTION(0)                  // END_COLLECTION
 };
 
-BleKeyboard::BleKeyboard(String deviceName, String deviceManufacturer, uint8_t batteryLevel) 
+BleKeyboard::BleKeyboard(std::string deviceName, std::string deviceManufacturer, uint8_t batteryLevel) 
     : hid(0)
-    , deviceName(deviceName.substring(0, 15))
-    , deviceManufacturer(deviceManufacturer.substring(0,15))
+    , deviceName(deviceName.substr(0, 15))
+    , deviceManufacturer(deviceManufacturer.substr(0, 15))
     , batteryLevel(batteryLevel) {}
 
 void BleKeyboard::begin(void)
 {
-  NimBLEDevice::init(std::string(deviceName.c_str()));
+  NimBLEDevice::init(deviceName);
   pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(this);
 
@@ -114,7 +114,7 @@ void BleKeyboard::begin(void)
 
   outputKeyboard->setCallbacks(this);
 
-  hid->setManufacturer(std::string(deviceManufacturer.c_str()));
+  hid->setManufacturer(deviceManufacturer);
 
   hid->setPnp(0x02, vid, pid, version);
   hid->setHidInfo(0x00, 0x01);
@@ -138,7 +138,6 @@ void BleKeyboard::begin(void)
   advertising = pServer->getAdvertising();
   advertising->setAppearance(HID_KEYBOARD);
   advertising->addServiceUUID(hid->getHidService()->getUUID());
-//   advertising->setScanResponse(false);
   advertising->start();
   hid->setBatteryLevel(batteryLevel);
   
@@ -167,7 +166,7 @@ void BleKeyboard::setBatteryLevel(uint8_t level) {
 }
 
 //must be called before begin in order to set the name
-void BleKeyboard::setName(String deviceName) {
+void BleKeyboard::setName(std::string deviceName) {
   this->deviceName = deviceName;
 }
 

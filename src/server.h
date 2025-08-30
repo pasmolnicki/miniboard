@@ -6,9 +6,10 @@
 #include "config.h"
 #include "battery.h"
 #include "page.h"
+#include "template_parser.h"
+#include "EEPROMSettings.h"
 
-// Start the web server, before calling this function turn off
-// all bt related tasks for good. This server will persist, as long as
-// the user finishes the setup.
-void startServer();
+// Start the web server. Pass current settings so the page can
+// modify keypad layout then trigger reboot into BLE keyboard mode.
+void startServer(EEPROMSettings &settings);
 void serverTask();

@@ -23,7 +23,6 @@ public:
     void load() {
         if (!EEPROM.begin(SIZE)) return;
         EEPROM.get(OFFSET, m_settings);
-
         if (!valid()) {
             m_settings = DEFAULT_SETTINGS;
         }
@@ -62,8 +61,9 @@ public:
 private:
     uint8_t M_checksum() const {
         uint8_t checksum = 0;
-        for (size_t i = 0; i < sizeof(eeprom_settings_t) - sizeof(uint8_t); i++) {
-            checksum ^= ((uint8_t*)&m_settings)[i];
+        checksum ^= m_settings.boot_type;
+        for (size_t i = 0; i < sizeof(m_settings.keypad); i++) {
+            checksum ^= m_settings.keypad[i];
         }
         return checksum;
     }

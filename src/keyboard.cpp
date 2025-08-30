@@ -61,7 +61,7 @@ void setupKeyboard(EEPROMSettings& settings) {
         auto currentSettings = settings.get();
         currentSettings->boot_type = BOOT_HTTP_SERVER;
         settings.save();
-        exit(0); 
+        esp_restart();
     });
 
     for (int i = 0; i < sizeof(keypadButtons) / sizeof(keypadButtons[0]); ++i) {
