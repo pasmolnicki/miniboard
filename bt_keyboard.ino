@@ -8,7 +8,7 @@ Bluetooth Low Energy keypad made with ESP32.
 It features:
 - 4 customizable buttons
 - Battery level monitoring
-- HTTP server for button layout setup
+- HTTP server for button layout setup and sleep timeout
 - Light sleep mode for power saving
 - Memory leak (~2kB) when put to sleep mode
 

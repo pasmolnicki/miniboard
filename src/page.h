@@ -87,8 +87,8 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
 </head>
 <body>
     <header id="header">
-        <h1>Miniboard Keypad Setup</h1>
-        <p class="subtitle">Configure the 4 hardware buttons and flash settings to EEPROM</p>
+        <h1>Miniboard Setup</h1>
+        <p class="subtitle">Configure the 4 hardware buttons or sleep timeout and flash settings to EEPROM</p>
     </header>
     <main id="main-content">
         <div class="flex">

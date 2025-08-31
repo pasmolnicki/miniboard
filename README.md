@@ -1,15 +1,17 @@
 # Miniboard
 
-Custom Bluetooth Low Energy keypad with configurable key mappings
+<img src="/docs/images/miniboard-img.jpg" width="700" />
 
-<img src="/docs/images/bt-keyboard-miniboard.jpg" width="700" />
+---
+
+Custom Bluetooth Low Energy keypad with configurable key mappings
 
 ## Features
 
 - 4 customizable buttons
 - Battery level monitoring
 - Light sleep mode for power saving
-- HTTP server for button layout setup (see [Keypad setup](#keypad-setup))
+- HTTP server for device configuration (see [Keypad setup](#keypad-setup))
 - Memory leak (~2kB) when put to sleep mode
 - Heater mode when board powered by USB and power switch turned off
 
@@ -51,9 +53,9 @@ Setup steps:
 
 ## Keypad setup
 
-<img src="/docs/images/miniboard-keypad-setup-page.png" />
+<img src="/docs/images/miniboard setup.png" />
 
-To configure the keypad layout, you can use the built-in HTTP server to access the web interface. From there, you can customize the key mappings for each button.
+To configure the keypad layout or sleep timeout, you can use the built-in HTTP server to access the web interface. From there, you can customize the key mappings for each button.
 
 Follow these steps:
 1. Press the server button
@@ -67,7 +69,7 @@ The microcontroller will reboot with the new key mappings.
 
 Battery life: ~18-19 hours with a 3000mAh battery (ESP32 draws ~160mA)
 
-Sleep mode activates after 15 minutes of idle state. Press any key to wake.
+Sleep mode activates after 15 minutes of idle state (by default). Press any key to wake.
 
 ## License
 
