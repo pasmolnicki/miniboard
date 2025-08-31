@@ -7,7 +7,7 @@ constexpr const char* VERSION = "1.0.0";
 
 // Server config
 constexpr const char* SERVER_SSID = "Miniboard AP";
-constexpr const char* SERVER_PASSWORD = "jebac_zydow42069";
+constexpr const char* SERVER_PASSWORD = "miniboard123";
 
 constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000, // 15 minutes
               BATTERY_UPDATE_INTERVAL = 10 * 1000; // 10 seconds
