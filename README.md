@@ -57,7 +57,7 @@ To configure the keypad layout, you can use the built-in HTTP server to access t
 
 Follow these steps:
 1. Press the server button
-2. Connect to the `Miniboard AP` network
+2. Connect to the `Miniboard AP` network, default password is `miniboard123`
 3. Open a web browser and go to `http://192.168.4.1`
 
 After finishing the configuration, press `Save & Reboot` button to commit the changes.
