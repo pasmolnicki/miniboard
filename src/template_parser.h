@@ -23,4 +23,4 @@ typedef struct {
 
 typedef std::vector<parser_value_t> parser_args_t;
 
-void parse(const char* temp, char* result, parser_args_t);
+void parse(const char* temp, char* result, parser_args_t args = {});

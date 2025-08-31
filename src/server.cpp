@@ -56,12 +56,14 @@ static void handleRoot() {
 }
 
 static void handleInfo() {
-    constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u]})";
+    constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u], "defaultKeymap":[%u, %u, %u, %u]})";
 
+    auto defaultKeymap = DEFAULT_SETTINGS.keypad;
     auto s = g_settings.get();
-    char buffer[128];
+    char buffer[256];
     snprintf(buffer, sizeof(buffer), JSON_TEMPLATE, 
-        readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3]);
+        readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3],
+        defaultKeymap[0], defaultKeymap[1], defaultKeymap[2], defaultKeymap[3]);
 
     dlog_v("/info %s\n", buffer);
     sendJson(200, buffer);

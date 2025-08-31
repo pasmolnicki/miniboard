@@ -149,7 +149,7 @@ void BleKeyboard::end(void)
   without causing memory leak...
   https://github.com/nkolban/esp32-snippets/issues/839
   */
-  NimBLEDevice::deinit(false);
+  NimBLEDevice::deinit(false); // cannot release whole bt memory here
 }
 
 bool BleKeyboard::isConnected(void) {

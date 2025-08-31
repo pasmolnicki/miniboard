@@ -42,13 +42,13 @@ void setupKeyboard() {
         g_settings.save();
         esp_restart();
     });
-    serverButton.begin();    
+    serverButton.begin();
 
-    keypad = g_settings.get()->keypad;
     for (int i = 0; i < sizeof(keypadButtons) / sizeof(keypadButtons[0]); ++i) {
         keypadButtons[i].begin();
         keypadButtons[i].onPress([i]() {
-            bleKeyboard.press(keypad[i]);
+            dlog_v("Button %d pressed, sending keycode %d\n", i + 1, g_settings.get()->keypad[i]);
+            bleKeyboard.press(g_settings.get()->keypad[i]);
         }).onRelease(releaseAll);
 
         // wakeup if any button is pressed

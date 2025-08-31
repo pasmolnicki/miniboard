@@ -31,7 +31,7 @@ void printConfig(const config_t& config) {
     Serial.printf("CPU: %dMhz\n", getCpuFrequencyMhz());
     Serial.printf("Battery: %d%%\n", readBatteryLevel());
     Serial.printf("Boot type: %s\n", config.boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
-     if (config.boot_type == BOOT_HTTP_SERVER) {
+    if (config.boot_type == BOOT_HTTP_SERVER) {
         Serial.printf("AP IP: %s\n", config.ap_ip.toString().c_str());
     }
     
@@ -60,11 +60,13 @@ void blinkLed(int times, int delayms = 300) {
 
 // Setup button callbacks and wakeup protocols
 void setup() {
+    Serial.begin(115200);
+
     // Read EEPROM for saved settings
     g_settings.load();
     setupLed();
     setupBattery();
-    Serial.begin(115200);
+    
     config_t config = {};
 
     switch (g_settings.get()->boot_type)

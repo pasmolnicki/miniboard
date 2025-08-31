@@ -10,7 +10,52 @@ bool advance(int& i, int len) {
         return true;
     }
     return false;
-} 
+}
+
+// advance 'i' until target text is found in buf or the end of the buffer is reached
+bool advance_until(const char* buf, int len, int& i, const char* target) {
+    int target_len = strlen(target);
+    while(advance(i, len) && i < len - target_len + 1) {
+        log_temp_v("Checking for target '%s' at position %d (%c)\n", target, i, buf[i]);
+        if (strncmp(&buf[i], target, target_len) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void remove_long_comments(const char* temp, char* page, int& page_iter, int& iter, int end) {
+    if (temp[iter] == '/' && peek(temp, end, iter) == '*') {
+        log_temp("Found /*");
+        int comment_end = iter + 2;
+
+        if (advance_until(temp, end, comment_end, "*/")) {
+            log_temp_v("Skipping comment until %d\n", comment_end);
+            iter = comment_end + 2;
+            return;
+        } else {
+            log_temp("Unterminated comment, copying as-is");
+            // unterminated comment, copy as-is
+            page[page_iter] = temp[iter];
+            page_iter++;
+            iter++;
+            return;
+        }
+    }
+}
+
+// Should be reworked
+void remove_single_line_comments(const char* temp, char* page, int& page_iter, int& iter, int end) {
+    if (temp[iter] == '/' && peek(temp, end, iter) == '/') {
+        log_temp("Found //");
+        int comment_end = iter + 2;
+        advance_until(temp, end, comment_end, "\n");
+        log_temp_v("Skipped until %d\n", comment_end);
+        iter = comment_end + 1;
+        return;
+    }
+}
 
 // Template values are formatted this way: <%NAME%>
 void parse(const char* temp, char* page, parser_args_t args) {
@@ -19,21 +64,14 @@ void parse(const char* temp, char* page, parser_args_t args) {
         page_iter = 0,
         end = strlen(temp);
 
-    while (iter != end) {
+    while (iter < end) {
 
         // That's presumably a template argument
         if (temp[iter] == '<' && peek(temp, end, iter) == '%') {
             log_temp("Found <%");
 
             int arg_name_iter = iter + 1;
-
-            bool valid = false;
-            while (advance(arg_name_iter, end)) {
-                if (temp[arg_name_iter] == '%' && peek(temp, end, arg_name_iter) == '>') {
-                    valid = true;
-                    break;
-                }
-            }
+            bool valid = advance_until(temp, end, arg_name_iter, "%>");
 
             log_temp_v("Arg name ends at %d, valid=%d\n", arg_name_iter, valid);
 
@@ -69,7 +107,7 @@ void parse(const char* temp, char* page, parser_args_t args) {
             }
             continue;
         }
-        
+
         log_temp_v("cpy '%c'\n", temp[iter]);
         page[page_iter] = temp[iter];
         page_iter++;
