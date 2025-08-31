@@ -8,7 +8,8 @@ enum boot_type_t {
 typedef struct {
     boot_type_t boot_type; // what program to run on boot
     uint8_t keypad[4]; // assigned keys 1-4
-    uint8_t checksum; // simple checksum, xor of all bytes in struct except this one
+    uint32_t sleep_timeout_ms; // time of inactivity after which to sleep, 0 = never
+    uint32_t checksum; // simple checksum, xor of all bytes in struct except this one
 } eeprom_settings_t;
 
 typedef struct config_t : public eeprom_settings_t {

@@ -9,7 +9,7 @@ void initPage();
 /*
 // For debugging
 async function fetch_dummy(url, data) {
-	if (url === '/info') return Promise.resolve({json: () => ({battery_level: 32,keymap: [...defaultKeymap]})});
+	if (url === '/info') return Promise.resolve({json: () => ({battery_level: 32,keymap: [...defaultKeymap], defaultKeymap, sleepTimeout: currentSleepTimeoutSecs, defaultTimeout: defaultSleepTimeoutSecs})});
     return Promise.resolve({json: () => ({})});
 }
 */
@@ -29,6 +29,7 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
      --text:#eee; 
      --muted:#888; 
      --danger:#e53935; 
+     --danger-border:#761c1a;
 }
     * { 
         box-sizing:border-box; 
@@ -49,6 +50,9 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
     .grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:1rem; }
     .card { background:var(--card); border:1px solid #2c2f33; padding:1rem; border-radius:12px; position:relative; box-shadow:0 4px 12px -4px #000 inset, 0 2px 6px -2px #000; }
     .card h2 { margin:0 0 .75rem; font-size:1.1rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--accent2); }
+    .card-error { color:var(--danger); border-color: var(--danger-border);}
+    .input-error { border-color: var(--danger-border); }
+
     label { font-size:.8rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:var(--muted); display:block; margin-bottom:.35rem; }
     select, input[type=number] { width:100%; padding:.55rem .6rem; border-radius:8px; background:#121416; border:1px solid #2d3238; color:var(--text); font-size:.85rem; font-family:inherit; outline:none; transition:border .15s, background .15s; }
     select:focus, input[type=number]:focus { border-color:var(--accent2); background:#171b1f; }
@@ -75,7 +79,7 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
     a:hover { text-decoration:underline; }
     .flex { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
     .mt { margin-top:1.2rem; }
-    .small { font-size:.65rem; color:var(--muted); text-align:center; }
+    .small { font-size:.8rem; color:var(--muted); text-align:center; }
     .info { font-size:.8rem; color:var(--muted); text-align:center; }
     .error { font-size:.8rem; color:var(--danger); text-align:center; }
 </style>
@@ -91,6 +95,12 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
         </div>
         <section class="grid" id="keyGrid"></section>
         <div class="kbd-preview" id="preview"></div>
+        <div class="card fade-enter" id="powerSleepCard" style="max-width:340px;margin:1.2rem auto 0;">
+            <h2 style="margin-top:0">Power / Sleep</h2>
+            <label for="sleepTimeout">Sleep Timeout (minutes)</label>
+            <input type="number" id="sleepTimeout" min="1" max="720" step="1" value="15" oninput="sleepTimeoutInputChanged()" />
+            <p style="color:var(--muted);font-size:.75rem;margin:.5rem 0 0">Device enters light sleep after inactivity. 1-720 minutes.</p>
+        </div>
         <div class="actions">
             <button class="secondary" onclick="loadInfo()">Refresh</button>
             <button class="primary" onclick="save()">Save & Reboot</button>
@@ -141,7 +151,14 @@ let defaultKeymap = [217, 218, 176, 178];
 let deviceKeymap = [217, 218, 176, 178];
 let currentKeymap = [...defaultKeymap];
 let batteryTimer = null;
-let isModified = () => {for (let i = 0; i < currentKeymap.length; i++) {if (currentKeymap[i] !== deviceKeymap[i]) {return true;}}return false;};
+let deviceSleepTimeoutSecs = 15*60; // from device (/info)
+let currentSleepTimeoutSecs = deviceSleepTimeoutSecs;
+let defaultSleepTimeoutSecs = 15*60; // assume firmware default 15 min
+function isModified(){
+    if (currentSleepTimeoutSecs !== deviceSleepTimeoutSecs) return true;
+    for (let i=0;i<currentKeymap.length;i++){ if(currentKeymap[i] !== deviceKeymap[i]) return true; }
+    return false;
+}
 
 // Icons
 const OK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="32px" fill="var(--accent)" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M530.8 134.1C545.1 144.5 548.3 164.5 537.9 178.8L281.9 530.8C276.4 538.4 267.9 543.1 258.5 543.9C249.1 544.7 240 541.2 233.4 534.6L105.4 406.6C92.9 394.1 92.9 373.8 105.4 361.3C117.9 348.8 138.2 348.8 150.7 361.3L252.2 462.8L486.2 141.1C496.6 126.8 516.6 123.6 530.9 134z"/></svg>';
@@ -177,10 +194,36 @@ function changeKey(index,value){
     setStatus(isModified() ? 'Unsaved changes' : '');
 }
 
+function sleepInputValidity(){
+    const input = el('sleepTimeout');
+    const value = parseInt(input.value, 10);
+    if (isNaN(value) || value < 1 || value > 720) {
+        input.classList.add('input-error');
+        el('powerSleepCard').classList.add('card-error');
+        return false;
+    }
+    if (input.classList.contains('input-error')) {
+        el('powerSleepCard').classList.remove('card-error');
+        input.classList.remove('input-error');
+    }
+    return true;
+}
+
+function sleepTimeoutInputChanged(){
+    const minutes = parseInt(el('sleepTimeout').value,10);
+    if(sleepInputValidity()){
+        currentSleepTimeoutSecs = minutes * 60;
+        setStatus(isModified() ? 'Unsaved changes' : '');
+    }
+}
+
 function loadInfo(){
     fetch('/info').then(r=>r.json()).then(d=>{
         if(Array.isArray(d.keymap)){ currentKeymap = d.keymap.slice(0,4); deviceKeymap = [...currentKeymap]; }
         if(Array.isArray(d.defaultKeymap)){ defaultKeymap = d.defaultKeymap.slice(0,4); }
+        if(typeof d.sleepTimeout === 'number') { deviceSleepTimeoutSecs = d.sleepTimeout; currentSleepTimeoutSecs = deviceSleepTimeoutSecs; }
+        if(typeof d.defaultTimeout === 'number') { defaultSleepTimeoutSecs = d.defaultTimeout; }
+        el('sleepTimeout').value = Math.max(1, Math.round(currentSleepTimeoutSecs/60));
         el('batteryLevel').textContent = (d.battery_level!==undefined? d.battery_level+'%':'--');
         renderGrid();
         setStatus('Info loaded');
@@ -189,9 +232,13 @@ function loadInfo(){
 
 function save(){
     setStatus('Saving...');
-    fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keymap:currentKeymap})})
+    // validate sleep timeout
+    const sleepTimeout = parseInt(el('sleepTimeout').value, 10);
+    if (!sleepInputValidity()) return;
+
+    const body = `{"keymap":[${currentKeymap.join(',')}], "sleep_timeout": ${currentSleepTimeoutSecs}}`;
+    fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
         .then(r=>r.json()).then(d=>{ 
-            // Fade out the page, and display 'saved' message
             el('main-content').innerHTML = `
                 <div class="fade-enter" style="text-align:center; padding:4rem 1rem;">
                     <div style="display: inline-flex; align-items: center; justify-content: center;">
@@ -201,6 +248,9 @@ function save(){
                     <p style="color:var(--muted); margin-top:1rem;">The device is rebooting now and will start in BLE keyboard mode using the new layout.</p>
                 </div>`;
             el('header').innerHTML = '';
+
+            // remove battery timer
+            clearInterval(batteryTimer);
         })
         .catch(e=>{ setStatus(`Save failed: ${e.message}`,'error'); console.error(e); });
 }
@@ -208,6 +258,8 @@ function save(){
 // Defaults mirror DEFAULT_SETTINGS in firmware (Down, Up, Backspace, Enter)
 function resetToDefaults(){ 
     currentKeymap=[...defaultKeymap]; 
+    currentSleepTimeoutSecs = defaultSleepTimeoutSecs;
+    document.getElementById('sleepTimeout').value = Math.round(currentSleepTimeoutSecs/60);
     renderGrid(); 
     setStatus(`Defaults loaded ${isModified() ? ' - unsaved changes' : ''}`);
 }

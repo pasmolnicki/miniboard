@@ -18,12 +18,13 @@ void EEPROMSettings::load() {
     if (!EEPROM.begin(SIZE)) return;
     EEPROM.get(OFFSET, m_settings);
 
-    dlog_v("Loaded settings: {boot_type: %d, keypad: [%d, %d, %d, %d], checksum: %d}\n",
+    dlog_v("Loaded settings: {boot_type: %d, keypad: [%d, %d, %d, %d], sleep_timeout_ms: %d, checksum: %d}\n",
             m_settings.boot_type,
             m_settings.keypad[0],
             m_settings.keypad[1],
             m_settings.keypad[2],
             m_settings.keypad[3],
+            m_settings.sleep_timeout_ms,
             m_settings.checksum);
     
     if (!valid()) {
@@ -54,9 +55,10 @@ bool EEPROMSettings::valid() const {
 }
 
 
-uint8_t EEPROMSettings::M_checksum() const {
-    uint8_t checksum = 0;
+uint32_t EEPROMSettings::M_checksum() const {
+    uint32_t checksum = 0;
     checksum ^= m_settings.boot_type;
+    checksum ^= m_settings.sleep_timeout_ms;
     for (size_t i = 0; i < sizeof(m_settings.keypad); i++) {
         checksum ^= m_settings.keypad[i];
     }

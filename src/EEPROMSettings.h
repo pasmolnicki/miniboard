@@ -31,7 +31,7 @@ public:
 
     bool valid() const;
 private:
-    uint8_t M_checksum() const;
+    uint32_t M_checksum() const;
 
     eeprom_settings_t m_settings { DEFAULT_SETTINGS }; // default values
 };

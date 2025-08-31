@@ -4,6 +4,7 @@ static BleKeyboard bleKeyboard;
 
 static Button serverButton = Button(PIN_SERVER_BUTTON);
 static uint8_t* keypad = nullptr;
+static uint32_t sleepTimeout = SLEEP_TIMEOUT;
 
 static Button keypadButtons[] = {
     Button(PIN_BUTTONS[2]),
@@ -35,6 +36,8 @@ void setupKeyboard() {
     bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", readBatteryLevel());
     bleKeyboard.begin();
 
+    sleepTimeout = g_settings.get()->sleep_timeout_ms;
+
     // Restart the device and boot the HTTP server
     serverButton.onPress([](){
         auto currentSettings = g_settings.get();
@@ -61,8 +64,9 @@ void setupKeyboard() {
 void keyboardTask() {
     static int64_t lastActivity = 0;
 
+
     // Enter deep sleep mode after given timeout
-    if (millis() - lastActivity > SLEEP_TIMEOUT) { 
+    if (millis() - lastActivity > sleepTimeout) {
         dlog("Entering sleep...");
         dlog_v("Memory: %d\n", esp_get_free_heap_size());
         bleKeyboard.end();

@@ -56,20 +56,22 @@ static void handleRoot() {
 }
 
 static void handleInfo() {
-    constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u], "defaultKeymap":[%u, %u, %u, %u]})";
+    constexpr const char* JSON_TEMPLATE = 
+        R"({"battery_level":%u,"keymap":[%u, %u, %u, %u], "defaultKeymap":[%u, %u, %u, %u], "sleepTimeout": %u, "defaultTimeout": %u})";
 
     auto defaultKeymap = DEFAULT_SETTINGS.keypad;
     auto s = g_settings.get();
     char buffer[256];
     snprintf(buffer, sizeof(buffer), JSON_TEMPLATE, 
         readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3],
-        defaultKeymap[0], defaultKeymap[1], defaultKeymap[2], defaultKeymap[3]);
+        defaultKeymap[0], defaultKeymap[1], defaultKeymap[2], defaultKeymap[3],
+        s->sleep_timeout_ms / 1000, DEFAULT_SETTINGS.sleep_timeout_ms / 1000);
 
     dlog_v("/info %s\n", buffer);
     sendJson(200, buffer);
 }
 
-// Accept JSON body: {"keymap":[k1,k2,k3,k4]}
+// Accept JSON body: {"keymap":[k1,k2,k3,k4], "sleep_timeout": <timeout in seconds>}
 static void handleSave() {
     if (!server->hasArg("plain")) { 
         sendJson(400, "{\"error\":\"missing body\"}"); 
@@ -78,18 +80,21 @@ static void handleSave() {
 
     String body = server->arg("plain");
     int vals[4];
-    int matched = sscanf(body.c_str(), "{\"keymap\":[%d,%d,%d,%d]}", &vals[0], &vals[1], &vals[2], &vals[3]);
-    if (matched != 4) { 
-        sendJson(400, "{\"error\":\"bad format\"}"); 
-        return; 
+    int sleepTimeout;
+    int matched = sscanf(body.c_str(), "{\"keymap\":[%d,%d,%d,%d], \"sleep_timeout\": %d}", &vals[0], &vals[1], &vals[2], &vals[3], &sleepTimeout);
+    if (matched != 5) {
+        sendJson(400, "{\"error\":\"bad format\"}");
+        return;
     }
 
     dlog_v("Received new keymap: [%d, %d, %d, %d]\n", vals[0], vals[1], vals[2], vals[3]);
+    dlog_v("Received new sleep_timeout: %d seconds\n", sleepTimeout);
 
     auto s = g_settings.get();
     for (int i=0;i<4;i++) {
         s->keypad[i] = (uint8_t)vals[i];
     }
+    s->sleep_timeout_ms = sleepTimeout * 1000;
     s->boot_type = BOOT_BLE_KEYBOARD; // ensure we boot keyboard next
     g_settings.save();
     sendJson(200, "{\"status\":\"ok\",\"rebooting\":true}");

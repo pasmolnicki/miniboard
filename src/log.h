@@ -2,7 +2,7 @@
 
 #include <HardwareSerial.h>
 
-#define USE_LOGGING 0
+#define USE_LOGGING 1
 
 #if USE_LOGGING
     #define LOG_TAG "Miniboard"

@@ -26,5 +26,6 @@ constexpr int PIN_BUTTONS[] = {
 constexpr eeprom_settings_t DEFAULT_SETTINGS = {
     BOOT_BLE_KEYBOARD,
     {KEY_DOWN_ARROW, KEY_UP_ARROW, KEY_BACKSPACE, KEY_RETURN},
+    SLEEP_TIMEOUT,
     0xFF
 };
