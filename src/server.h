@@ -12,5 +12,5 @@
 
 // Start the web server. Pass current settings so the page can
 // modify keypad layout then trigger reboot into BLE keyboard mode.
-IPAddress startServer(EEPROMSettings &settings);
+IPAddress startServer();
 void serverTask();

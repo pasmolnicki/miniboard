@@ -70,3 +70,5 @@ private:
 
     eeprom_settings_t m_settings { DEFAULT_SETTINGS }; // default values
 };
+
+static EEPROMSettings g_settings;

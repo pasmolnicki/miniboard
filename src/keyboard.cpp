@@ -28,7 +28,7 @@ void batteryTask() {
     }
 }
 
-void setupKeyboard(EEPROMSettings& settings) {
+void setupKeyboard() {
 
     // No need for max cpu performance, to save power using lower clock speed
     setCpuFrequencyMhz(80);
@@ -45,13 +45,13 @@ void setupKeyboard(EEPROMSettings& settings) {
 
     serverButton.begin();    
 
-    keypad = settings.get()->keypad;
+    keypad = g_settings.get()->keypad;
 
     // Restart the device and boot the HTTP server
-    serverButton.onPress([&settings](){
-        auto currentSettings = settings.get();
+    serverButton.onPress([](){
+        auto currentSettings = g_settings.get();
         currentSettings->boot_type = BOOT_HTTP_SERVER;
-        settings.save();
+        g_settings.save();
         esp_restart();
     });
 

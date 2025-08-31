@@ -6,5 +6,5 @@
 #include "config.h"
 #include "battery.h"
 
-void setupKeyboard(EEPROMSettings& settings);
+void setupKeyboard();
 void keyboardTask();

@@ -14,7 +14,6 @@ License: MIT
 typedef void (*task_t)();
 
 task_t loopTask = nullptr;
-EEPROMSettings settings;
 
 void printConfig(const config_t& config) {
     Serial.println("Miniboard config");
@@ -51,27 +50,27 @@ void blinkLed(int times, int delayms = 300) {
 // Setup button callbacks and wakeup protocols
 void setup() {
     // Read EEPROM for saved settings
-    settings.load();
+    g_settings.load();
     setupLed();
     Serial.begin(115200);
     config_t config = {};
-    
-    switch (settings.get()->boot_type)
+
+    switch (g_settings.get()->boot_type)
     {
     case BOOT_HTTP_SERVER:
         blinkLed(2);
-        config.ap_ip = startServer(settings);
+        config.ap_ip = startServer();
         loopTask = serverTask;
         break;
 
     case BOOT_BLE_KEYBOARD:
     default:
         blinkLed(1);
-        setupKeyboard(settings);
+        setupKeyboard();
         loopTask = keyboardTask;
     }
 
-    config = *settings.get();
+    config = *g_settings.get();
     printConfig(config);
 }
 

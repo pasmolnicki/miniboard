@@ -2,7 +2,6 @@
 
 // Assign output variables to GPIO pins
 static WebServer* server = nullptr;
-static EEPROMSettings* g_settings = nullptr; // pointer to modify and persist
 static Button bootButton = Button(PIN_SERVER_BUTTON);
 
 // pre-declare server functions
@@ -22,15 +21,14 @@ static void reboot() {
 }
 
 static void bootKeyboard() {
-    auto s = g_settings->get();
+    auto s = g_settings.get();
     s->boot_type = BOOT_BLE_KEYBOARD; // ensure we boot keyboard next
-    g_settings->save();
+    g_settings.save();
     reboot();
 }
 
 // Starts the web server with AP and returns the IP address
-IPAddress startServer(EEPROMSettings &settings) {
-    g_settings = &settings;
+IPAddress startServer() {
     server = new WebServer(80);
     initPage();
 
@@ -59,7 +57,7 @@ static void handleRoot() {
 static void handleInfo() {
     constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u]})";
 
-    auto s = g_settings->get();
+    auto s = g_settings.get();
     char buffer[256];
     snprintf(buffer, sizeof(buffer), JSON_TEMPLATE, 
         readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3]);
@@ -68,10 +66,6 @@ static void handleInfo() {
 
 // Accept JSON body: {"keymap":[k1,k2,k3,k4]}
 static void handleSave() {
-    if (!g_settings) { 
-        sendJson(500, "{\"error\":\"settings null\"}"); 
-        return; 
-    }
     if (!server->hasArg("plain")) { 
         sendJson(400, "{\"error\":\"missing body\"}"); 
         return; 
@@ -87,12 +81,12 @@ static void handleSave() {
 
     dlog_v("Received new keymap: [%d, %d, %d, %d]\n", vals[0], vals[1], vals[2], vals[3]);
 
-    auto s = g_settings->get();
+    auto s = g_settings.get();
     for (int i=0;i<4;i++) {
         s->keypad[i] = (uint8_t)vals[i];
     }
     s->boot_type = BOOT_BLE_KEYBOARD; // ensure we boot keyboard next
-    g_settings->save();
+    g_settings.save();
     sendJson(200, "{\"status\":\"ok\",\"rebooting\":true}");
 
     delay(50);

@@ -7,7 +7,7 @@
 constexpr const char* SERVER_SSID = "Miniboard AP";
 constexpr const char* SERVER_PASSWORD = "jebac_zydow42069";
 
-constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000, // 15 minutes
+constexpr int SLEEP_TIMEOUT = 5 * 1000, // 15 minutes
               BATTERY_UPDATE_INTERVAL = 10 * 1000; // 10 seconds
 
 constexpr int PIN_BATTERY_LEVEL = 13,
