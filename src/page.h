@@ -79,9 +79,10 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
     a:hover { text-decoration:underline; }
     .flex { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
     .mt { margin-top:1.2rem; }
-    .small { font-size:.8rem; color:var(--muted); text-align:center; }
+    .small { font-size:.8rem; color:var(--muted); }
     .info { font-size:.8rem; color:var(--muted); text-align:center; }
     .error { font-size:.8rem; color:var(--danger); text-align:center; }
+    .tc { text-align: center;}
 </style>
 </head>
 <body>
@@ -98,8 +99,9 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
         <div class="card fade-enter" id="powerSleepCard" style="max-width:340px;margin:1.2rem auto 0;">
             <h2 style="margin-top:0">Power / Sleep</h2>
             <label for="sleepTimeout">Sleep Timeout (minutes)</label>
-            <input type="number" id="sleepTimeout" min="1" max="720" step="1" value="15" oninput="sleepTimeoutInputChanged()" />
-            <p style="color:var(--muted);font-size:.75rem;margin:.5rem 0 0">Device enters light sleep after inactivity. 1-720 minutes.</p>
+            <input type="number" id="sleepTimeout" min="0" max="720" step="1" value="15" oninput="sleepTimeoutInputChanged()" />
+            <p style="margin:.6rem 0 0" class="small">Device enters light sleep after inactivity. <br>
+            0-720 minutes, 0 disables sleep mode.</p>
         </div>
         <div class="actions">
             <button class="secondary" onclick="loadInfo()">Refresh</button>
@@ -107,7 +109,7 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
             <button class="outline" onclick="resetToDefaults()">Defaults</button>
         </div>
         <div id="status" class="status"></div>
-        <p class="small mt">After saving the device will reboot and start in BLE keyboard mode using the new layout.</p>
+        <p class="small mt tc">After saving the device will reboot and start in BLE keyboard mode using the new layout.</p>
     </main>
     <footer>Miniboard &middot; ESP32 BLE Keyboard Config</footer>
 <script>
@@ -197,7 +199,7 @@ function changeKey(index,value){
 function sleepInputValidity(){
     const input = el('sleepTimeout');
     const value = parseInt(input.value, 10);
-    if (isNaN(value) || value < 1 || value > 720) {
+    if (isNaN(value) || value < 0 || value > 720) {
         input.classList.add('input-error');
         el('powerSleepCard').classList.add('card-error');
         return false;
@@ -223,10 +225,11 @@ function loadInfo(){
         if(Array.isArray(d.defaultKeymap)){ defaultKeymap = d.defaultKeymap.slice(0,4); }
         if(typeof d.sleepTimeout === 'number') { deviceSleepTimeoutSecs = d.sleepTimeout; currentSleepTimeoutSecs = deviceSleepTimeoutSecs; }
         if(typeof d.defaultTimeout === 'number') { defaultSleepTimeoutSecs = d.defaultTimeout; }
-        el('sleepTimeout').value = Math.max(1, Math.round(currentSleepTimeoutSecs/60));
+        el('sleepTimeout').value = Math.max(0, Math.round(currentSleepTimeoutSecs/60));
         el('batteryLevel').textContent = (d.battery_level!==undefined? d.battery_level+'%':'--');
         renderGrid();
         setStatus('Info loaded');
+        sleepInputValidity();
     }).catch(e=>{ setStatus('Failed to load info','error'); console.error(e); });
 }
 
@@ -234,7 +237,10 @@ function save(){
     setStatus('Saving...');
     // validate sleep timeout
     const sleepTimeout = parseInt(el('sleepTimeout').value, 10);
-    if (!sleepInputValidity()) return;
+    if (!sleepInputValidity()) {
+    	setStatus('Invalid sleep timeout, choose number of minutes between 0 and 720', 'error');
+        return;
+    }
 
     const body = `{"keymap":[${currentKeymap.join(',')}], "sleep_timeout": ${currentSleepTimeoutSecs}}`;
     fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:body})
@@ -262,6 +268,7 @@ function resetToDefaults(){
     document.getElementById('sleepTimeout').value = Math.round(currentSleepTimeoutSecs/60);
     renderGrid(); 
     setStatus(`Defaults loaded ${isModified() ? ' - unsaved changes' : ''}`);
+    sleepInputValidity();
 }
 
 function pollBattery(){ fetch('/info').then(r=>r.json()).then(d=>{ el('batteryLevel').textContent=d.battery_level+'%'; }); }

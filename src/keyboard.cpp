@@ -64,9 +64,8 @@ void setupKeyboard() {
 void keyboardTask() {
     static int64_t lastActivity = 0;
 
-
     // Enter deep sleep mode after given timeout
-    if (millis() - lastActivity > sleepTimeout) {
+    if (sleepTimeout != 0 && millis() - lastActivity > sleepTimeout) {
         dlog("Entering sleep...");
         dlog_v("Memory: %d\n", esp_get_free_heap_size());
         bleKeyboard.end();

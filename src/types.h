@@ -18,6 +18,7 @@ typedef struct config_t : public eeprom_settings_t {
     config_t& operator=(const eeprom_settings_t& settings) {
         this->boot_type = settings.boot_type;
         memcpy(this->keypad, settings.keypad, sizeof(this->keypad));
+        this->sleep_timeout_ms = settings.sleep_timeout_ms;
         this->checksum = settings.checksum;
         return *this;
     }

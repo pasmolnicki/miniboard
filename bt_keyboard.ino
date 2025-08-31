@@ -23,21 +23,22 @@ task_t loopTask = nullptr;
 
 void printConfig(const config_t& config) {
     Serial.println("Miniboard config");
-    Serial.printf("Version: %s\n", VERSION);
-    Serial.printf("Chip: %s\n", ESP.getChipModel());
-    Serial.printf("Sketch size: %dkB\n", ESP.getSketchSize() / (1024));
-    Serial.printf("Free heap: %dkB\n", esp_get_free_heap_size() / (1024));
-    Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
-    Serial.printf("CPU: %dMhz\n", getCpuFrequencyMhz());
-    Serial.printf("Battery: %d%%\n", readBatteryLevel());
-    Serial.printf("Boot type: %s\n", config.boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
+    Serial.printf("\tVersion: %s\n", VERSION);
+    Serial.printf("\tChip: %s\n", ESP.getChipModel());
+    Serial.printf("\tSketch size: %dkB\n", ESP.getSketchSize() / (1024));
+    Serial.printf("\tFree heap: %dkB\n", esp_get_free_heap_size() / (1024));
+    Serial.printf("\tXTAL: %dMhz\n", getXtalFrequencyMhz());
+    Serial.printf("\tCPU: %dMhz\n", getCpuFrequencyMhz());
+    Serial.printf("\tBattery: %d%%\n", readBatteryLevel());
+    Serial.printf("\tSleep timeout: %dms\n", config.sleep_timeout_ms);
+    Serial.printf("\tBoot type: %s\n", config.boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
     if (config.boot_type == BOOT_HTTP_SERVER) {
-        Serial.printf("AP IP: %s\n", config.ap_ip.toString().c_str());
+        Serial.printf("\tAP IP: %s\n", config.ap_ip.toString().c_str());
     }
     
     auto keypad = config.keypad;
     for (int i = 0; i < sizeof(keypad) / sizeof(keypad[0]); ++i) {
-        Serial.printf("Keypad button %d: %d\n", i + 1, keypad[i]);
+        Serial.printf("\t\tKeypad button %d: %d\n", i + 1, keypad[i]);
     }
 }
 
