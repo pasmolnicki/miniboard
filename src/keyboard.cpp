@@ -32,20 +32,8 @@ void setupKeyboard() {
 
     // No need for max cpu performance, to save power using lower clock speed
     setCpuFrequencyMhz(80);
-
-    // battery level pin
-    gpio_config_t battery_conf = {
-        .pin_bit_mask = (1ULL << PIN_BATTERY_LEVEL),
-        .mode = GPIO_MODE_INPUT,
-    };
-    gpio_config(&battery_conf);
-
     bleKeyboard = BleKeyboard("Miniboard", "Pavlov sp. z o.o.", readBatteryLevel());
     bleKeyboard.begin();
-
-    serverButton.begin();    
-
-    keypad = g_settings.get()->keypad;
 
     // Restart the device and boot the HTTP server
     serverButton.onPress([](){
@@ -54,7 +42,9 @@ void setupKeyboard() {
         g_settings.save();
         esp_restart();
     });
+    serverButton.begin();    
 
+    keypad = g_settings.get()->keypad;
     for (int i = 0; i < sizeof(keypadButtons) / sizeof(keypadButtons[0]); ++i) {
         keypadButtons[i].begin();
         keypadButtons[i].onPress([i]() {
@@ -74,7 +64,7 @@ void keyboardTask() {
     // Enter deep sleep mode after given timeout
     if (millis() - lastActivity > SLEEP_TIMEOUT) { 
         dlog("Entering sleep...");
-        Serial.flush();
+        dlog_v("Memory: %d\n", esp_get_free_heap_size());
         bleKeyboard.end();
         esp_light_sleep_start();
 
@@ -82,6 +72,7 @@ void keyboardTask() {
         // without memory leak
         // https://github.com/nkolban/esp32-snippets/issues/839
         dlog("Waking up...");
+        dlog_v("Memory: %d\n", esp_get_free_heap_size());
         bleKeyboard.begin();
         lastActivity = millis();
     }

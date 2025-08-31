@@ -35,39 +35,39 @@ constexpr const char PAGE_HTML[] = R"_(<!DOCTYPE html>
         flex-direction:column; 
     }
     header { padding:1rem 1.25rem; text-align:center; }
-    h1 { font-size:1.4rem; margin:0.2rem 0 0.6rem; font-weight:600; }
-    p.subtitle { margin:0; color:var(--muted); font-size:0.9rem; }
+    h1 { font-size:1.6rem; margin:0.2rem 0 0.6rem; font-weight:600; }
+    p.subtitle { margin:0; color:var(--muted); font-size:1rem; }
     main { width:100%; max-width:900px; margin:0 auto 2rem; padding:0 1rem 2rem; flex:1; }
     .grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:1rem; }
     .card { background:var(--card); border:1px solid #2c2f33; padding:1rem; border-radius:12px; position:relative; box-shadow:0 4px 12px -4px #000 inset, 0 2px 6px -2px #000; }
-    .card h2 { margin:0 0 .75rem; font-size:.95rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--accent2); }
-    label { font-size:.7rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:var(--muted); display:block; margin-bottom:.35rem; }
+    .card h2 { margin:0 0 .75rem; font-size:1.1rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--accent2); }
+    label { font-size:.8rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:var(--muted); display:block; margin-bottom:.35rem; }
     select, input[type=number] { width:100%; padding:.55rem .6rem; border-radius:8px; background:#121416; border:1px solid #2d3238; color:var(--text); font-size:.85rem; font-family:inherit; outline:none; transition:border .15s, background .15s; }
     select:focus, input[type=number]:focus { border-color:var(--accent2); background:#171b1f; }
     .row { display:flex; gap:.6rem; }
     .row > div { flex:1; }
     .klabel { position:absolute; top:.6rem; right:.75rem; background:#263238; color:#b0bec5; font-size:.6rem; font-weight:700; padding:.22rem .45rem; border-radius:6px; letter-spacing:.5px; }
-    footer { padding:1rem 1.25rem; text-align:center; font-size:.7rem; color:var(--muted); }
+    footer { padding:1rem 1.25rem; text-align:center; font-size:.8rem; color:var(--muted); }
     button { cursor:pointer; font-family:inherit; font-weight:600; letter-spacing:.5px; border-radius:10px; border:1px solid transparent; padding:.75rem 1.1rem; font-size:.8rem; display:inline-flex; align-items:center; gap:.5rem; }
     button.primary { background:var(--accent); color:#fff; }
     button.secondary { background:#263238; color:#cfd8dc; }
     button.outline { background:transparent; border-color:#37474f; color:#b0bec5; }
     button.danger { background:var(--danger); color:#fff; }
     button:active { transform:translateY(1px); }
-    .actions { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:1.4rem; }
-    .status { margin-top:1.25rem; font-size:.75rem; min-height:1.2rem; }
-    .pill { display:inline-flex; align-items:center; background:#263238; color:#b0bec5; padding:.45rem .65rem; border-radius:999px; font-size:.65rem; font-weight:600; letter-spacing:.5px; gap:.4rem; }
+    .actions { display:flex; flex-wrap:wrap; justify-content: center; gap:.7rem; margin-top:1.4rem; }
+    .status { margin-top:1.25rem; text-align:center; font-size:.8rem; min-height:1.2rem; }
+    .pill { display:inline-flex; align-items:center; background:#263238; color:#b0bec5; padding:.65rem .85rem; border-radius:999px; font-size:.8rem; font-weight:600; gap:.6rem; }
     .inline { display:inline; }
     .fade-enter { animation:fade .25s ease; }
     @keyframes fade { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
     .kbd-preview { margin-top:.4rem; display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; }
-    .kbd-preview span { background:#162027; padding:.55rem .4rem; border-radius:8px; font-size:.65rem; text-align:center; border:1px solid #253038; }
+    .kbd-preview span { background:#162027; padding:.55rem .4rem; border-radius:8px; font-size:.85rem; text-align:center; border:1px solid #253038; }
     .battery { font-weight:600; color:var(--accent); }
     a { color:var(--accent2); text-decoration:none; }
     a:hover { text-decoration:underline; }
     .flex { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
     .mt { margin-top:1.2rem; }
-    .small { font-size:.65rem; color:var(--muted); }
+    .small { font-size:.65rem; color:var(--muted); text-align:center; }
 </style>
 </head>
 <body>

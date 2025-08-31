@@ -3,15 +3,17 @@
 #include "BleKeyboard.h"
 #include "types.h"
 
+constexpr const char* VERSION = "1.0.0";
+
 // Server config
 constexpr const char* SERVER_SSID = "Miniboard AP";
 constexpr const char* SERVER_PASSWORD = "jebac_zydow42069";
 
-constexpr int SLEEP_TIMEOUT = 5 * 1000, // 15 minutes
+constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000, // 15 minutes
               BATTERY_UPDATE_INTERVAL = 10 * 1000; // 10 seconds
 
-constexpr int PIN_BATTERY_LEVEL = 13,
-              PIN_SERVER_BUTTON = 15, // to change
+constexpr int PIN_BATTERY_LEVEL = 33,
+              PIN_SERVER_BUTTON = 15,
               PIN_LED_BUILTIN = 2;
 
 // buttons 1, 2, 3, 4 -> GPIOs 26, 25, 14, 27

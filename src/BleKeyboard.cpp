@@ -149,7 +149,7 @@ void BleKeyboard::end(void)
   without causing memory leak...
   https://github.com/nkolban/esp32-snippets/issues/839
   */
-  NimBLEDevice::deinit(false); // cannot release whole bt memory here
+  NimBLEDevice::deinit(false);
 }
 
 bool BleKeyboard::isConnected(void) {
@@ -497,11 +497,12 @@ size_t BleKeyboard::write(const uint8_t *buffer, size_t size) {
 
 void BleKeyboard::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
   this->connected = true;
-  dlog_v("Connected to BLE keyboard");
+  dlog_v("New connection: %s\n", connInfo.getAddress().toString().c_str());
   pServer->updateConnParams(connInfo.getConnHandle(), 24, 48, 4, 400);
 }
 
 void BleKeyboard::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
+  dlog_v("Disconnected: %s\n", connInfo.getAddress().toString().c_str());
   this->connected = false;
   NimBLEDevice::startAdvertising(); // restart advertising
 }

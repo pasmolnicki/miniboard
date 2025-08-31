@@ -8,7 +8,7 @@ static Button bootButton = Button(PIN_SERVER_BUTTON);
 static void handleRoot();
 static void handleInfo();
 static void handleSave();
-static void sendJson(int code, const String &body) { 
+inline void sendJson(int code, const String &body) { 
     server->send(code, "application/json", body); 
 }
 
@@ -33,6 +33,7 @@ IPAddress startServer() {
     initPage();
 
     bootButton.onPress(bootKeyboard);
+    bootButton.begin();
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(SERVER_SSID, SERVER_PASSWORD);
@@ -58,9 +59,11 @@ static void handleInfo() {
     constexpr const char* JSON_TEMPLATE = R"({"battery_level":%u,"keymap":[%u, %u, %u, %u]})";
 
     auto s = g_settings.get();
-    char buffer[256];
+    char buffer[128];
     snprintf(buffer, sizeof(buffer), JSON_TEMPLATE, 
         readBatteryLevel(), s->keypad[0], s->keypad[1], s->keypad[2], s->keypad[3]);
+
+    dlog_v("/info %s\n", buffer);
     sendJson(200, buffer);
 }
 

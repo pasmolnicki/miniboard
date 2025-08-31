@@ -1,6 +1,17 @@
 #pragma once
 
 #include "config.h"
+#include "log.h"
+
+
+inline void setupBattery() {
+    // battery level pin
+    gpio_config_t battery_conf = {
+        .pin_bit_mask = (1ULL << PIN_BATTERY_LEVEL),
+        .mode = GPIO_MODE_INPUT,
+    };
+    gpio_config(&battery_conf);
+}
 
 /**
  * Returns battery level as a percentage (0-100).

@@ -4,7 +4,13 @@
 
 /*
 
-Bluetooth Keyboard
+Bluetooth Low Energy keypad made with ESP32.
+It features:
+- 4 customizable buttons
+- Battery level monitoring
+- HTTP server for button layout setup
+- Light sleep mode for power saving
+- Memory leak (~2kB) when put to sleep mode
 
 Made by IlikeChooros
 License: MIT
@@ -17,8 +23,13 @@ task_t loopTask = nullptr;
 
 void printConfig(const config_t& config) {
     Serial.println("Miniboard config");
+    Serial.printf("Version: %s\n", VERSION);
+    Serial.printf("Chip: %s\n", ESP.getChipModel());
+    Serial.printf("Sketch size: %dkB\n", ESP.getSketchSize() / (1024));
+    Serial.printf("Free heap: %dkB\n", esp_get_free_heap_size() / (1024));
     Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
     Serial.printf("CPU: %dMhz\n", getCpuFrequencyMhz());
+    Serial.printf("Battery: %d%%\n", readBatteryLevel());
     Serial.printf("Boot type: %s\n", config.boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
      if (config.boot_type == BOOT_HTTP_SERVER) {
         Serial.printf("AP IP: %s\n", config.ap_ip.toString().c_str());
@@ -52,6 +63,7 @@ void setup() {
     // Read EEPROM for saved settings
     g_settings.load();
     setupLed();
+    setupBattery();
     Serial.begin(115200);
     config_t config = {};
 
