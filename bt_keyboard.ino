@@ -16,12 +16,16 @@ typedef void (*task_t)();
 task_t loopTask = nullptr;
 EEPROMSettings settings;
 
-void printConfig() {
+void printConfig(const config_t& config) {
     Serial.println("Miniboard config");
     Serial.printf("XTAL: %dMhz\n", getXtalFrequencyMhz());
     Serial.printf("CPU: %dMhz\n", getCpuFrequencyMhz());
-    Serial.printf("Boot type: %s\n", settings.get()->boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
-    auto keypad = settings.get()->keypad;
+    Serial.printf("Boot type: %s\n", config.boot_type == BOOT_BLE_KEYBOARD ? "BLE Keyboard" : "HTTP Server");
+     if (config.boot_type == BOOT_HTTP_SERVER) {
+        Serial.printf("AP IP: %s\n", config.ap_ip.toString().c_str());
+    }
+    
+    auto keypad = config.keypad;
     for (int i = 0; i < sizeof(keypad) / sizeof(keypad[0]); ++i) {
         Serial.printf("Keypad button %d: %d\n", i + 1, keypad[i]);
     }
@@ -50,12 +54,13 @@ void setup() {
     settings.load();
     setupLed();
     Serial.begin(115200);
+    config_t config = {};
     
     switch (settings.get()->boot_type)
     {
     case BOOT_HTTP_SERVER:
         blinkLed(2);
-        startServer(settings);
+        config.ap_ip = startServer(settings);
         loopTask = serverTask;
         break;
 
@@ -66,7 +71,8 @@ void setup() {
         loopTask = keyboardTask;
     }
 
-    printConfig();
+    config = *settings.get();
+    printConfig(config);
 }
 
 void loop() {

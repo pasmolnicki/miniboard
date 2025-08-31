@@ -94,9 +94,6 @@ BleKeyboard::BleKeyboard(std::string deviceName, std::string deviceManufacturer,
     , deviceManufacturer(deviceManufacturer.substr(0, 15))
     , batteryLevel(batteryLevel) {}
 
-// #define dlog_v(msg, ...) Serial.printf("[" LOG_TAG "]: " msg, ##__VA_ARGS__)
-#define dlog_v(msg, ...) (void)msg;
-
 void BleKeyboard::begin(void)
 {
 	// Init BLE stack (returns immediately if already inited)
@@ -121,7 +118,7 @@ void BleKeyboard::begin(void)
 	hid->setPnp(0x02, vid, pid, version);
 	hid->setHidInfo(0x00, 0x01);
 
-  	NimBLEDevice::setSecurityAuth(false, false, true);
+  	NimBLEDevice::setSecurityAuth(true, true, true);
 
 	hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
 	hid->startServices();

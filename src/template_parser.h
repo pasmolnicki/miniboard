@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 
+#include "log.h"
 
 typedef struct {
     const char* name;

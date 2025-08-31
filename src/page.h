@@ -126,7 +126,7 @@ const KEY_OPTIONS = [
     {v:'/'.charCodeAt(0),l:'/'},{v:'`'.charCodeAt(0),l:'`'},
 ];
 
-
+// Will parse these values
 const defaultKeymap = [<%k0%>,<%k1%>,<%k2%>,<%k3%>];
 let currentKeymap = [...defaultKeymap];
 let batteryTimer = null;

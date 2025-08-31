@@ -1,11 +1,11 @@
 #include "keyboard.h"
 
-BleKeyboard bleKeyboard;
+static BleKeyboard bleKeyboard;
 
-Button serverButton = Button(PIN_SERVER_BUTTON);
-uint8_t* keypad = nullptr;
+static Button serverButton = Button(PIN_SERVER_BUTTON);
+static uint8_t* keypad = nullptr;
 
-Button keypadButtons[] = {
+static Button keypadButtons[] = {
     Button(PIN_BUTTONS[2]),
     Button(PIN_BUTTONS[3]),
     Button(PIN_BUTTONS[0]),
@@ -73,7 +73,7 @@ void keyboardTask() {
 
     // Enter deep sleep mode after given timeout
     if (millis() - lastActivity > SLEEP_TIMEOUT) { 
-        Serial.println("Entering sleep...");
+        dlog("Entering sleep...");
         Serial.flush();
         bleKeyboard.end();
         esp_light_sleep_start();
@@ -81,7 +81,7 @@ void keyboardTask() {
         // after wakeup cope with memory leak, there is no way to deinit ble device 
         // without memory leak
         // https://github.com/nkolban/esp32-snippets/issues/839
-        Serial.println("Waking up...");
+        dlog("Waking up...");
         bleKeyboard.begin();
         lastActivity = millis();
     }

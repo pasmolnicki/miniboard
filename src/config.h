@@ -3,6 +3,10 @@
 #include "BleKeyboard.h"
 #include "types.h"
 
+// Server config
+constexpr const char* SERVER_SSID = "Miniboard AP";
+constexpr const char* SERVER_PASSWORD = "jebac_zydow42069";
+
 constexpr int SLEEP_TIMEOUT = 15 * 60 * 1000, // 15 minutes
               BATTERY_UPDATE_INTERVAL = 10 * 1000; // 10 seconds
 
@@ -22,7 +26,3 @@ constexpr eeprom_settings_t DEFAULT_SETTINGS = {
     {KEY_DOWN_ARROW, KEY_UP_ARROW, KEY_BACKSPACE, KEY_RETURN},
     0xFF
 };
-
-// Server config
-constexpr const char* SERVER_SSID = "Miniboard AP";
-constexpr const char* SERVER_PASSWORD = "pass42069";

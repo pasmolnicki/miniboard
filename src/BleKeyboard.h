@@ -5,7 +5,7 @@
 This code is a copy of 
 https://github.com/T-vK/ESP32-BLE-Keyboard
 
-Slightly modified by IlikeChooros, with 'end' method added.
+Modified to use only NimBLE.
 */
 
 #ifndef ESP32_BLE_KEYBOARD_H
@@ -19,6 +19,8 @@ Slightly modified by IlikeChooros, with 'end' method added.
 #include <NimBLEServer.h>
 
 #include "Print.h"
+
+#include "log.h"
 
 #define BLE_KEYBOARD_VERSION "0.0.4"
 #define BLE_KEYBOARD_VERSION_MAJOR 0

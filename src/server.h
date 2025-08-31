@@ -8,8 +8,9 @@
 #include "page.h"
 #include "template_parser.h"
 #include "EEPROMSettings.h"
+#include "ButtonLib.h"
 
 // Start the web server. Pass current settings so the page can
 // modify keypad layout then trigger reboot into BLE keyboard mode.
-void startServer(EEPROMSettings &settings);
+IPAddress startServer(EEPROMSettings &settings);
 void serverTask();
