@@ -12,7 +12,7 @@ It features:
 - Light sleep mode for power saving
 - Memory leak (~2kB) when put to sleep mode
 
-Made by IlikeChooros
+Made by pasmolnicki
 License: MIT
 
 */
